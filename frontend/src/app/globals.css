@@ -2,16 +2,16 @@
 
 @theme {
   --color-brand-primary: #6c5ce7;
-  --color-brand-primary-hover: #5b4bc4;
-  --color-brand-secondary: #00cec9;
+  --color-brand-primary-hover: #5a4bd4;
+  --color-brand-secondary: #a855f7;
   
-  --color-sidebar-bg: #111827;
-  --color-sidebar-hover: #1f2937;
-  --color-sidebar-active: #374151;
-  --color-sidebar-text: #9ca3af;
+  --color-sidebar-bg: #1a1a2e;
+  --color-sidebar-hover: #2a2a4a;
+  --color-sidebar-active: #3a3a5a;
+  --color-sidebar-text: #8b8ba3;
   --color-sidebar-text-active: #ffffff;
 
-  --color-surface-bg: #f3f4f6;
+  --color-surface-bg: #ffffff;
   --color-card-bg: #ffffff;
   
   --color-text-primary: #111827;
@@ -27,4 +27,23 @@
     background-color: var(--color-surface-bg);
     color: var(--color-text-primary);
   }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }

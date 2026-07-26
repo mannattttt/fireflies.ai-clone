@@ -2,28 +2,43 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { useSearchParams, useRouter } from "next/navigation";
+import { ArrowLeftIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { api } from "@/lib/api";
 import { MeetingDetail } from "@/lib/types";
 
 import MediaPlayer from "@/components/notepad/MediaPlayer";
 import TranscriptPanel from "@/components/notepad/TranscriptPanel";
 import AISidebar from "@/components/notepad/AISidebar";
+import EditMeetingModal from "@/components/dashboard/EditMeetingModal";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function MeetingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   // Use React.use to unwrap the Promise in Next.js 15+
   const resolvedParams = use(params);
-  
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const startTime = searchParams.get('t');
+
   const [meeting, setMeeting] = useState<MeetingDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const { addToast } = useToast();
+
   // Player State
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(startTime ? parseFloat(startTime) : 0);
 
   useEffect(() => {
     fetchMeeting();
   }, [resolvedParams.id]);
+
+  useEffect(() => {
+    if (startTime && !isPlaying) {
+      setCurrentTime(parseFloat(startTime));
+      setIsPlaying(true);
+    }
+  }, [startTime]);
 
   // Mock player timer
   useEffect(() => {
@@ -47,6 +62,20 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
       console.error("Failed to fetch meeting detail:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteMeeting = async () => {
+    if (!meeting) return;
+    if (window.confirm(`Are you sure you want to delete "${meeting.title}"?`)) {
+      try {
+        await api.deleteMeeting(meeting.id);
+        addToast(`"${meeting.title}" has been deleted.`, "success");
+        router.push("/dashboard");
+      } catch (error) {
+        console.error("Failed to delete meeting", error);
+        addToast("Failed to delete meeting.", "error");
+      }
     }
   };
 
@@ -75,24 +104,43 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
   return (
     <div className="flex flex-col h-full bg-gray-50/50">
       {/* Top Header */}
-      <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 shrink-0 gap-4 sticky top-0 z-10">
-        <Link href="/dashboard" className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-          <ArrowLeftIcon className="w-5 h-5" />
-        </Link>
-        <div className="flex flex-col">
-          <h1 className="text-sm font-semibold text-gray-900 leading-tight">{meeting.title}</h1>
-          <span className="text-xs text-gray-500">{new Date(meeting.date).toLocaleDateString()}</span>
+      <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 shrink-0 sticky top-0 z-10">
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard" className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+            <ArrowLeftIcon className="w-5 h-5" />
+          </Link>
+          <div className="flex flex-col">
+            <h1 className="text-sm font-semibold text-gray-900 leading-tight">{meeting.title}</h1>
+            <span className="text-xs text-gray-500">{new Date(meeting.date).toLocaleDateString()}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsEditModalOpen(true)}
+            className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <PencilIcon className="w-4 h-4" />
+            Edit
+          </button>
+          <button
+            onClick={handleDeleteMeeting}
+            className="flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <TrashIcon className="w-4 h-4" />
+            Delete
+          </button>
         </div>
       </header>
 
       {/* Main Content: 3-Pane Layout */}
       <div className="flex-1 flex overflow-hidden">
-        
+
         {/* Left & Center: Player & Transcript */}
         <div className="flex-1 flex flex-col h-full p-4 gap-4 overflow-hidden">
-          
+
           <div className="w-full max-w-4xl mx-auto shrink-0">
-            <MediaPlayer 
+            <MediaPlayer
               durationSeconds={meeting.duration_seconds}
               currentTime={currentTime}
               isPlaying={isPlaying}
@@ -102,7 +150,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
           </div>
 
           <div className="flex-1 w-full max-w-4xl mx-auto overflow-hidden">
-            <TranscriptPanel 
+            <TranscriptPanel
               segments={meeting.transcript_segments}
               currentTime={currentTime}
               onSegmentClick={(time) => {
@@ -118,8 +166,15 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
         <div className="w-[400px] shrink-0 border-l border-gray-200 hidden lg:block bg-white z-0">
           <AISidebar meeting={meeting} />
         </div>
-        
+
       </div>
+
+      <EditMeetingModal
+        isOpen={isEditModalOpen}
+        meeting={meeting}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={fetchMeeting}
+      />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TranscriptSegment } from "@/lib/types";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
@@ -78,11 +78,27 @@ export default function TranscriptPanel({
     );
   };
 
+  const [localSearch, setLocalSearch] = useState(searchQuery);
+  const activeSearch = localSearch || searchQuery;
+
   return (
     <div className="flex flex-col h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
-        <h2 className="font-semibold text-gray-900">Thread</h2>
-        <div className="flex items-center gap-4">
+      <div className="px-6 py-3 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10 gap-4">
+        <h2 className="font-semibold text-gray-900 text-sm shrink-0">Thread</h2>
+        
+        {/* Inline Search Bar */}
+        <div className="relative flex-1 max-w-xs">
+          <MagnifyingGlassIcon className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input 
+            type="text" 
+            placeholder="Search transcript..." 
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-8 pr-3 py-1 text-xs focus:bg-white focus:border-brand-primary outline-none transition-all"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
           <div className="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md">
             {segments.length} segments
           </div>
@@ -132,7 +148,7 @@ export default function TranscriptPanel({
                             : "hover:bg-gray-50 text-gray-700 border-l-2 border-transparent pl-1.5"
                         }`}
                       >
-                        {highlightText(seg.text, searchQuery)}
+                        {highlightText(seg.text, activeSearch)}
                       </div>
                     );
                   })}

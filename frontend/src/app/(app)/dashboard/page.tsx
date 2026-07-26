@@ -1,34 +1,49 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { format, intervalToDuration } from "date-fns";
-import { 
-  MagnifyingGlassIcon, 
-  PlusIcon, 
-  AdjustmentsHorizontalIcon,
-  VideoCameraIcon
+import {
+  MagnifyingGlassIcon,
+  PlusIcon,
+  HashtagIcon,
+  FolderIcon,
+  VideoCameraIcon,
+  SparklesIcon,
+  CheckBadgeIcon,
+  RocketLaunchIcon,
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import NewMeetingModal from "@/components/dashboard/NewMeetingModal";
 import { api } from "@/lib/api";
 import { MeetingListItem } from "@/lib/types";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function DashboardPage() {
   const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("All Meetings");
+  const [activeTab, setActiveTab] = useState("Hosted by me");
+  const [activeChannel, setActiveChannel] = useState("My Meetings");
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const { addToast } = useToast();
 
   useEffect(() => {
     fetchMeetings();
-  }, [searchQuery]);
+  }, [searchQuery, sortOrder, dateFrom, dateTo]);
 
   const fetchMeetings = async () => {
     try {
       setLoading(true);
-      const data = await api.getMeetings(searchQuery || undefined);
+      const data = await api.getMeetings(
+        searchQuery || undefined,
+        dateFrom || undefined,
+        dateTo || undefined,
+        sortOrder
+      );
       setMeetings(data);
     } catch (error) {
       console.error("Failed to fetch meetings:", error);
@@ -37,34 +52,85 @@ export default function DashboardPage() {
     }
   };
 
-  const tabs = ["All Meetings", "My Meetings", "Shared with Me"];
+  const tabs = ["Hosted by me", "Shared with me"];
+  const channels = [
+    { name: "My Meetings", icon: HashtagIcon, active: true },
+    { name: "All Meetings", icon: FolderIcon, active: false },
+    { name: "Voice Agent Meetings", icon: VideoCameraIcon, active: false },
+  ];
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Header */}
-      <div className="px-8 pt-8 pb-4 border-b border-gray-100 flex flex-col gap-6 sticky top-0 bg-white z-10">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Notebook</h1>
-          <button 
+    <div className="flex h-full bg-white">
+      
+      {/* ── Left Panel: Channels ── */}
+      <div className="w-[220px] shrink-0 border-r border-gray-200 flex flex-col bg-white">
+        <div className="px-4 pt-5 pb-3 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-gray-900">Meetings</h2>
+          <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-brand-primary hover:bg-brand-primary-hover text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors text-sm"
+            className="p-1 text-[#6c5ce7] hover:bg-[#6c5ce7]/10 rounded-md transition-colors"
+            title="Add New Meeting"
           >
             <PlusIcon className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="px-4 pb-2">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="w-full flex items-center justify-center gap-1.5 bg-[#6c5ce7] hover:bg-[#5a4bd4] text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shadow-sm"
+          >
+            <PlusIcon className="w-3.5 h-3.5" />
             Add Meeting
           </button>
         </div>
 
-        {/* Tabs & Search */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex space-x-1 bg-gray-100/50 p-1 rounded-lg w-full sm:w-auto">
+        {/* Channel List */}
+        <div className="flex-1 px-2 space-y-0.5">
+          {channels.map((ch) => (
+            <button
+              key={ch.name}
+              onClick={() => setActiveChannel(ch.name)}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+                activeChannel === ch.name
+                  ? "bg-[#6c5ce7]/5 text-[#6c5ce7] font-medium"
+                  : "text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {activeChannel === ch.name ? (
+                <span className="text-[#6c5ce7] text-xs font-bold">#</span>
+              ) : (
+                <ch.icon className="w-4 h-4 text-gray-400" />
+              )}
+              {ch.name}
+            </button>
+          ))}
+
+          <div className="pt-4 px-3">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">All channels</p>
+            <p className="text-[#6c5ce7] text-xs font-medium mb-1">#</p>
+            <p className="text-xs text-gray-500">Create channels to organize your conversations</p>
+          </div>
+
+          <button className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg w-full mt-2">
+            <PlusIcon className="w-4 h-4" />
+            Channel
+          </button>
+        </div>
+      </div>
+
+      {/* ── Center Panel: Meeting List ── */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Tabs & Filters Header Row */}
+        <div className="px-6 pt-3 pb-3 flex flex-wrap items-center justify-between border-b border-gray-100 gap-3 relative">
+          <div className="flex items-center gap-1">
             {tabs.map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                  activeTab === tab 
-                    ? "bg-white text-gray-900 shadow-sm" 
-                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  activeTab === tab
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 {tab}
@@ -72,121 +138,235 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="relative w-full sm:w-64">
-              <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="flex items-center gap-2">
+            {/* Search Input */}
+            <div className="relative w-48 sm:w-56">
+              <MagnifyingGlassIcon className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input 
                 type="text" 
-                placeholder="Search meetings..." 
-                className="w-full pl-9 pr-4 py-1.5 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-primary/50 text-sm outline-none transition-all"
+                placeholder="Search title or participant..." 
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:bg-white focus:border-[#6c5ce7] transition-all"
               />
             </div>
-            <button className="flex items-center justify-center p-1.5 text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shrink-0">
-              <AdjustmentsHorizontalIcon className="w-5 h-5" />
+
+            {/* Recency Sort Dropdown */}
+            <select
+              value={sortOrder}
+              onChange={e => setSortOrder(e.target.value as "desc" | "asc")}
+              className="bg-white border border-gray-200 text-gray-700 text-xs rounded-lg px-2 py-1 outline-none font-medium cursor-pointer focus:border-[#6c5ce7]"
+            >
+              <option value="desc">Sort: Most Recent</option>
+              <option value="asc">Sort: Oldest First</option>
+            </select>
+
+            {/* Filter Toggle Button */}
+            <button 
+              onClick={() => setShowFilterMenu(!showFilterMenu)}
+              className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors flex items-center gap-1.5 ${
+                showFilterMenu || dateFrom || dateTo
+                  ? "border-[#6c5ce7] text-[#6c5ce7] bg-[#6c5ce7]/5"
+                  : "border-gray-200 text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              Filters
+              {(dateFrom || dateTo) && (
+                <span className="w-1.5 h-1.5 rounded-full bg-[#6c5ce7]" />
+              )}
             </button>
+
+            {/* Date Filter Dropdown Popover */}
+            {showFilterMenu && (
+              <div className="absolute right-6 top-full mt-2 w-72 bg-white border border-gray-200 rounded-xl shadow-xl p-4 z-50 space-y-3">
+                <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wider">Filter by Date Range</h4>
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">From Date</label>
+                    <input 
+                      type="date" 
+                      value={dateFrom} 
+                      onChange={e => setDateFrom(e.target.value)}
+                      className="w-full border border-gray-200 rounded-md px-2 py-1 text-xs outline-none focus:border-[#6c5ce7]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">To Date</label>
+                    <input 
+                      type="date" 
+                      value={dateTo} 
+                      onChange={e => setDateTo(e.target.value)}
+                      className="w-full border border-gray-200 rounded-md px-2 py-1 text-xs outline-none focus:border-[#6c5ce7]"
+                    />
+                  </div>
+                </div>
+                {(dateFrom || dateTo) && (
+                  <button 
+                    onClick={() => { setDateFrom(""); setDateTo(""); }}
+                    className="w-full text-center text-xs text-[#6c5ce7] font-medium hover:underline pt-1"
+                  >
+                    Clear Date Filters
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Meeting List */}
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="p-8">
+              <div className="animate-pulse space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-4 px-6 py-3">
+                    <div className="w-8 h-8 bg-gray-100 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 bg-gray-100 rounded w-1/3" />
+                      <div className="h-2 bg-gray-50 rounded w-1/4" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : meetings.length > 0 ? (
+            <div className="divide-y divide-gray-50">
+              {meetings.map((meeting) => {
+                const duration = intervalToDuration({ start: 0, end: meeting.duration_seconds * 1000 });
+                const formattedDuration = `${duration.minutes || 0}m ${duration.seconds || 0}s`;
+
+                return (
+                  <a
+                    key={meeting.id}
+                    href={`/meetings/${meeting.id}`}
+                    className="flex items-center gap-4 px-6 py-3.5 hover:bg-gray-50/80 transition-colors group cursor-pointer"
+                  >
+                    {/* Fireflies Logo Icon */}
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#6c5ce7]/20 to-[#a855f7]/20 flex items-center justify-center text-[#6c5ce7] shrink-0">
+                      <VideoCameraIcon className="w-4 h-4" />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 group-hover:text-[#6c5ce7] transition-colors truncate">
+                        {meeting.title}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {format(new Date(meeting.date), "EEE, MMM d yyyy, h:mm a")} · {formattedDuration}
+                      </p>
+                    </div>
+
+                    {/* Status Badge */}
+                    {meeting.has_summary ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 shrink-0">
+                        <CheckCircleIcon className="w-3 h-3" />
+                        Ready
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100 shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        Processing
+                      </span>
+                    )}
+                  </a>
+                );
+              })}
+            </div>
+          ) : (
+            /* Empty State — matches Fireflies */
+            <div className="flex-1 flex flex-col items-center justify-center py-20 px-8">
+              {/* Skeleton preview cards */}
+              <div className="space-y-3 mb-8 w-full max-w-xs">
+                {["K", "A", "R"].map((letter, i) => (
+                  <div key={i} className="flex items-center gap-3 px-4 py-2.5 bg-gray-50 rounded-lg">
+                    <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-500">
+                      {letter}
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-2 bg-gray-200 rounded w-3/4" />
+                      <div className="h-1.5 bg-gray-100 rounded w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <h3 className="text-base font-semibold text-gray-900 mb-1 text-center">
+                Looks like you haven&apos;t recorded a meeting yet
+              </h3>
+              <p className="text-sm text-gray-500 text-center max-w-sm mb-6">
+                Once you record your first meeting with Fireflies, it&apos;ll show up right here.
+              </p>
+
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="flex items-center gap-2 bg-[#6c5ce7] hover:bg-[#5a4bd4] text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+              >
+                <PlusIcon className="w-4 h-4" />
+                Capture
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Right Panel: Ask Fred ── */}
+      <div className="w-[300px] shrink-0 border-l border-gray-200 bg-white flex flex-col hidden xl:flex">
+        {/* Fred Header */}
+        <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-gray-100 flex items-center justify-center">
+            <SparklesIcon className="w-3.5 h-3.5 text-gray-500" />
+          </div>
+          <span className="text-sm font-medium text-gray-700">Ask Fred</span>
+        </div>
+
+        {/* Greeting */}
+        <div className="flex-1 p-5 overflow-y-auto">
+          <div className="mb-6">
+            <div className="flex justify-center mb-4">
+              <SparklesIcon className="w-8 h-8 text-[#6c5ce7]" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 text-center">Hi Mannat!</h3>
+            <p className="text-sm text-gray-600 text-center">Get ready for your meeting</p>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="space-y-3">
+            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left hover:bg-gray-50 transition-colors border border-gray-100">
+              <CheckBadgeIcon className="w-5 h-5 text-emerald-500" />
+              <span className="text-gray-700">My action items</span>
+            </button>
+            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left hover:bg-gray-50 transition-colors border border-gray-100">
+              <span className="text-lg">🎯</span>
+              <span className="text-gray-700">Key decisions</span>
+            </button>
+            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left hover:bg-gray-50 transition-colors border border-gray-100">
+              <RocketLaunchIcon className="w-5 h-5 text-pink-500" />
+              <span className="text-gray-700">Key initiatives</span>
+            </button>
+          </div>
+        </div>
+
+        {/* AskFred Input */}
+        <div className="p-3 border-t border-gray-100">
+          <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+            <span className="text-xs text-gray-400 font-medium"># My Meetings</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 mt-2 bg-white border border-gray-200 rounded-lg">
+            <input 
+              type="text" 
+              placeholder="Ask anything. Type / to run AI skills." 
+              className="flex-1 text-sm outline-none bg-transparent placeholder:text-gray-400"
+            />
           </div>
         </div>
       </div>
 
-      {/* Table Area */}
-      <div className="flex-1 overflow-auto bg-gray-50/30">
-        {loading ? (
-          <div className="p-8">
-            <div className="animate-pulse space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-16 bg-white border border-gray-100 rounded-lg w-full" />
-              ))}
-            </div>
-          </div>
-        ) : meetings.length > 0 ? (
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="text-xs text-gray-500 uppercase bg-gray-50/80 sticky top-0 border-b border-gray-200 z-0">
-              <tr>
-                <th scope="col" className="px-8 py-3 font-medium">Title</th>
-                <th scope="col" className="px-6 py-3 font-medium">Date</th>
-                <th scope="col" className="px-6 py-3 font-medium">Duration</th>
-                <th scope="col" className="px-6 py-3 font-medium">Participants</th>
-                <th scope="col" className="px-8 py-3 font-medium text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {meetings.map((meeting) => {
-                const duration = intervalToDuration({ start: 0, end: meeting.duration_seconds * 1000 });
-                const formattedDuration = `${duration.minutes || 0}m ${duration.seconds || 0}s`;
-                
-                return (
-                  <tr key={meeting.id} className="bg-white hover:bg-gray-50/80 transition-colors group cursor-pointer" onClick={() => window.location.href = `/meetings/${meeting.id}`}>
-                    <td className="px-8 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded bg-brand-primary/10 flex items-center justify-center text-brand-primary">
-                          <VideoCameraIcon className="w-4 h-4" />
-                        </div>
-                        <span className="font-semibold text-gray-900 group-hover:text-brand-primary transition-colors">
-                          {meeting.title}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-500">
-                      {format(new Date(meeting.date), "MMM d, yyyy")}
-                    </td>
-                    <td className="px-6 py-4 text-gray-500">
-                      {formattedDuration}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex -space-x-2 overflow-hidden">
-                        {meeting.participants.slice(0, 3).map((p) => (
-                          <div 
-                            key={p.id} 
-                            className="inline-block h-6 w-6 rounded-full ring-2 ring-white bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-700 bg-gradient-to-br from-gray-100 to-gray-300"
-                            title={p.name}
-                          >
-                            {p.name.charAt(0).toUpperCase()}
-                          </div>
-                        ))}
-                        {meeting.participants.length > 3 && (
-                          <div className="inline-block h-6 w-6 rounded-full ring-2 ring-white bg-gray-50 flex items-center justify-center text-[10px] font-medium text-gray-500">
-                            +{meeting.participants.length - 3}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-8 py-4 text-right">
-                      {meeting.has_summary ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100">
-                          <CheckCircleIcon className="w-3.5 h-3.5 text-emerald-500" />
-                          Summarized
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-100">
-                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                          Processing
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        ) : (
-          <div className="text-center py-32">
-            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
-              <MagnifyingGlassIcon className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">No meetings found</h3>
-            <p className="text-gray-500">
-              {searchQuery ? "Try adjusting your search terms." : "You haven't recorded any meetings yet."}
-            </p>
-          </div>
-        )}
-      </div>
-      
-      <NewMeetingModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSuccess={fetchMeetings} 
+      <NewMeetingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={() => {
+          fetchMeetings();
+          addToast("Meeting created successfully!", "success");
+        }}
       />
     </div>
   );

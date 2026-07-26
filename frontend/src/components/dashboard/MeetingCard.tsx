@@ -14,7 +14,7 @@ export default function MeetingCard({ meeting }: MeetingCardProps) {
   return (
     <Link href={`/meetings/${meeting.id}`} className="block group">
       <div className="bg-card-bg border border-gray-200 rounded-xl p-5 hover:border-brand-primary/50 hover:shadow-md hover:shadow-brand-primary/5 transition-all h-full flex flex-col relative overflow-hidden">
-        
+
         {/* Subtle decorative top border on hover */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary to-brand-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
 
@@ -44,8 +44,8 @@ export default function MeetingCard({ meeting }: MeetingCardProps) {
         <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
           <div className="flex -space-x-2 overflow-hidden">
             {meeting.participants.slice(0, 3).map((p, i) => (
-              <div 
-                key={p.id} 
+              <div
+                key={p.id}
                 className="inline-block h-7 w-7 rounded-full ring-2 ring-white bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600 bg-gradient-to-br from-gray-100 to-gray-300"
                 title={p.name}
               >
@@ -58,7 +58,7 @@ export default function MeetingCard({ meeting }: MeetingCardProps) {
               </div>
             )}
           </div>
-          
+
           {meeting.action_item_count > 0 && (
             <div className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-md">
               <CheckCircleIcon className="w-3.5 h-3.5" />

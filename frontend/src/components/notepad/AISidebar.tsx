@@ -4,7 +4,8 @@ import {
   SparklesIcon, 
   CheckCircleIcon, 
   HashtagIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  TrashIcon
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon as CheckCircleSolidIcon } from "@heroicons/react/24/solid";
 import { api } from "@/lib/api";
@@ -17,6 +18,7 @@ interface AISidebarProps {
 export default function AISidebar({ meeting, onTopicClick }: AISidebarProps) {
   const [activeTab, setActiveTab] = useState<"summary" | "tasks" | "topics">("summary");
   const [actionItems, setActionItems] = useState(meeting.action_items);
+  const [newTaskText, setNewTaskText] = useState("");
   const summary = meeting.summary;
 
   const handleToggleTask = async (id: number) => {
@@ -51,18 +53,49 @@ export default function AISidebar({ meeting, onTopicClick }: AISidebarProps) {
     );
   }
 
+  // Dynamically compute Quick Stats from transcript segments
+  const computeQuickStats = () => {
+    const segments = meeting.transcript_segments || [];
+    
+    // Count questions
+    const questionCount = segments.filter(s => s.text.includes("?")).length;
+
+    // Calculate talk ratio between top speakers
+    const speakerWords: Record<string, number> = {};
+    let totalWords = 0;
+
+    segments.forEach(s => {
+      const words = s.text.trim().split(/\s+/).length;
+      speakerWords[s.speaker_name] = (speakerWords[s.speaker_name] || 0) + words;
+      totalWords += words;
+    });
+
+    const speakers = Object.keys(speakerWords).sort((a, b) => speakerWords[b] - speakerWords[a]);
+
+    let talkRatioStr = "100%";
+    if (totalWords > 0 && speakers.length >= 2) {
+      const p1 = Math.round((speakerWords[speakers[0]] / totalWords) * 100);
+      const p2 = 100 - p1;
+      talkRatioStr = `${p1}% / ${p2}%`;
+    }
+
+    return { talkRatioStr, questionCount };
+  };
+
+  const { talkRatioStr, questionCount } = computeQuickStats();
+
   return (
-    <div className="flex flex-col h-full bg-gray-50 border-l border-gray-200 overflow-hidden">
-      {/* Tabs */}
-      <div className="flex items-center gap-1 p-2 bg-gray-100 border-b border-gray-200">
+    <div className="flex flex-col h-full bg-white border-l border-gray-200 overflow-hidden">
+      {/* Tabs Header */}
+      <div className="flex border-b border-gray-200 bg-gray-50/50 p-1">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-1 text-xs font-medium rounded-md transition-all ${
-              activeTab === tab.id 
-                ? "bg-white text-brand-primary shadow-sm ring-1 ring-gray-200" 
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+            className={`flex-1 py-2 px-3 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+              activeTab === tab.id
+                ? "bg-white text-brand-primary shadow-sm font-semibold"
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-100/50"
             }`}
           >
             <tab.icon className="w-4 h-4" />
@@ -86,16 +119,22 @@ export default function AISidebar({ meeting, onTopicClick }: AISidebarProps) {
               />
             </div>
             
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2 uppercase tracking-wider">
-                Meeting Summary
-              </h3>
-              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm text-sm text-gray-700 leading-relaxed space-y-3">
-                {summary.overview_text.split('\n').map((paragraph, i) => (
-                  <p key={i}>{paragraph}</p>
-                ))}
+            {summary ? (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2 uppercase tracking-wider">
+                  Meeting Summary
+                </h3>
+                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm text-sm text-gray-700 leading-relaxed space-y-3">
+                  {summary.overview_text.split('\n').map((paragraph, i) => (
+                    <p key={i}>{paragraph}</p>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-xs text-gray-500 text-center">
+                No summary available for this meeting.
+              </div>
+            )}
             
             <div>
               <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">
@@ -104,11 +143,11 @@ export default function AISidebar({ meeting, onTopicClick }: AISidebarProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white p-3 rounded-lg border border-gray-200 text-center">
                   <div className="text-xs text-gray-500 font-medium mb-1">Talk Ratio</div>
-                  <div className="font-semibold text-gray-900">54% / 46%</div>
+                  <div className="font-semibold text-gray-900">{talkRatioStr}</div>
                 </div>
                 <div className="bg-white p-3 rounded-lg border border-gray-200 text-center">
                   <div className="text-xs text-gray-500 font-medium mb-1">Questions</div>
-                  <div className="font-semibold text-gray-900">12 asked</div>
+                  <div className="font-semibold text-gray-900">{questionCount} asked</div>
                 </div>
               </div>
             </div>
@@ -118,9 +157,42 @@ export default function AISidebar({ meeting, onTopicClick }: AISidebarProps) {
         {/* TASKS TAB */}
         {activeTab === "tasks" && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider">
-              Action Items
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
+                Action Items
+              </h3>
+            </div>
+
+            {/* Quick Add Task Input */}
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!newTaskText.trim()) return;
+                try {
+                  const newItem = await api.createActionItem(meeting.id, newTaskText);
+                  setActionItems(prev => [...prev, newItem]);
+                  setNewTaskText("");
+                } catch (err) {
+                  console.error("Failed to add action item", err);
+                }
+              }}
+              className="flex items-center gap-2"
+            >
+              <input 
+                type="text" 
+                placeholder="Add a new action item..." 
+                value={newTaskText}
+                onChange={e => setNewTaskText(e.target.value)}
+                className="flex-1 px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg outline-none focus:border-brand-primary"
+              />
+              <button 
+                type="submit" 
+                disabled={!newTaskText.trim()}
+                className="px-3 py-1.5 bg-brand-primary hover:bg-brand-primary-hover text-white text-xs font-medium rounded-lg disabled:opacity-50 transition-colors"
+              >
+                Add
+              </button>
+            </form>
             
             {actionItems.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-8">No action items detected.</p>
@@ -129,21 +201,23 @@ export default function AISidebar({ meeting, onTopicClick }: AISidebarProps) {
                 {actionItems.map((item) => (
                   <div 
                     key={item.id} 
-                    onClick={() => handleToggleTask(item.id)}
-                    className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
+                    className={`flex items-start gap-3 p-3 rounded-xl border transition-all group ${
                       item.is_completed 
                         ? "bg-gray-50 border-transparent opacity-60" 
                         : "bg-white border-gray-200 shadow-sm hover:border-brand-primary/50"
                     }`}
                   >
-                    <button className="mt-0.5 shrink-0 transition-colors">
+                    <button 
+                      onClick={() => handleToggleTask(item.id)} 
+                      className="mt-0.5 shrink-0 transition-colors"
+                    >
                       {item.is_completed ? (
                         <CheckCircleSolidIcon className="w-5 h-5 text-emerald-500" />
                       ) : (
                         <div className="w-5 h-5 rounded-full border-2 border-gray-300 hover:border-brand-primary transition-colors" />
                       )}
                     </button>
-                    <div className="flex-1">
+                    <div className="flex-1 cursor-pointer" onClick={() => handleToggleTask(item.id)}>
                       <p className={`text-sm ${item.is_completed ? "text-gray-500 line-through" : "text-gray-800"}`}>
                         {item.text}
                       </p>
@@ -153,6 +227,21 @@ export default function AISidebar({ meeting, onTopicClick }: AISidebarProps) {
                         </span>
                       )}
                     </div>
+                    <button 
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          await api.deleteActionItem(item.id);
+                          setActionItems(items => items.filter(i => i.id !== item.id));
+                        } catch (err) {
+                          console.error("Failed to delete task", err);
+                        }
+                      }}
+                      className="text-gray-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                      title="Delete Task"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
                   </div>
                 ))}
               </div>

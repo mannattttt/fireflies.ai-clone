@@ -4,50 +4,86 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
   HomeIcon, 
-  DocumentTextIcon, 
-  ClipboardDocumentCheckIcon, 
-  SquaresPlusIcon 
+  UserGroupIcon,
+  VideoCameraIcon,
+  SparklesIcon,
+  ArrowUpTrayIcon,
+  ChartBarIcon,
+  ArrowDownTrayIcon,
+  LinkIcon,
+  UsersIcon,
+  StarIcon,
+  Cog6ToothIcon,
+  EllipsisHorizontalIcon
 } from "@heroicons/react/24/outline";
 
-const navItems = [
-  { name: "Notebook", href: "/dashboard", icon: HomeIcon },
-  { name: "Notes", href: "/notes", icon: DocumentTextIcon },
-  { name: "Tasks", href: "/tasks", icon: ClipboardDocumentCheckIcon },
-  { name: "Integrations", href: "/integrations", icon: SquaresPlusIcon },
+const topNavItems = [
+  { name: "Home", href: "/dashboard", icon: HomeIcon },
+  { name: "People", href: "/team", icon: UserGroupIcon },
+  { name: "Live Bot", href: "/live-bot", icon: VideoCameraIcon },
+  { name: "AI Apps", href: "/dashboard", icon: SparklesIcon },
+  { name: "STT Engine", href: "/transcription", icon: ArrowUpTrayIcon },
+  { name: "Analytics", href: "/dashboard", icon: ChartBarIcon },
+  { name: "Integrations", href: "/integrations", icon: LinkIcon },
+];
+
+const bottomNavItems = [
+  { name: "Team Workspaces", href: "/team", icon: UsersIcon },
+  { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-sidebar-bg text-sidebar-text hidden md:flex flex-col h-[calc(100vh-4rem)] border-r border-gray-800 sticky top-16 shrink-0">
-      <div className="flex-1 py-6 px-4 space-y-1">
-        {navItems.map((item) => {
+    <aside className="w-[52px] bg-[#1a1a2e] flex flex-col h-[calc(100vh-3.5rem)] border-r border-[#2a2a4a] sticky top-14 shrink-0 items-center py-3">
+      {/* Logo */}
+      <Link href="/dashboard" className="mb-4">
+        <div className="w-7 h-7 rounded-md bg-gradient-to-tr from-[#6c5ce7] to-[#a855f7] flex items-center justify-center text-white font-bold text-sm">
+          F
+        </div>
+      </Link>
+
+      {/* Top Nav Icons */}
+      <div className="flex-1 flex flex-col items-center gap-0.5">
+        {topNavItems.map((item) => {
+          const isActive = pathname === item.href || (item.href === "/dashboard" && pathname.startsWith("/meetings"));
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              title={item.name}
+              className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors ${
+                isActive 
+                  ? "bg-[#6c5ce7]/20 text-[#a78bfa]" 
+                  : "text-[#8b8ba3] hover:bg-[#2a2a4a] hover:text-[#c4c4d4]"
+              }`}
+            >
+              <item.icon className="w-[18px] h-[18px]" />
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Bottom Nav Icons */}
+      <div className="flex flex-col items-center gap-0.5 pt-2 border-t border-[#2a2a4a]">
+        {bottomNavItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium ${
+              title={item.name}
+              className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors ${
                 isActive 
-                  ? "bg-sidebar-active text-sidebar-text-active" 
-                  : "hover:bg-sidebar-hover hover:text-sidebar-text-active"
+                  ? "bg-[#6c5ce7]/20 text-[#a78bfa]" 
+                  : "text-[#8b8ba3] hover:bg-[#2a2a4a] hover:text-[#c4c4d4]"
               }`}
             >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
-              {item.name}
+              <item.icon className="w-[18px] h-[18px]" />
             </Link>
           );
         })}
-      </div>
-      <div className="p-4 border-t border-gray-800">
-        <div className="bg-gradient-to-r from-brand-primary/10 to-brand-secondary/10 border border-brand-primary/20 rounded-lg p-4">
-          <p className="text-xs font-semibold text-brand-secondary uppercase tracking-wider mb-1">Pro Plan</p>
-          <p className="text-sm text-sidebar-text mb-3">You have 450 minutes left this month.</p>
-          <button className="w-full py-1.5 text-sm bg-sidebar-active hover:bg-white hover:text-sidebar-bg text-sidebar-text-active rounded-md transition-colors font-medium">
-            Upgrade
-          </button>
-        </div>
       </div>
     </aside>
   );

@@ -16,6 +16,7 @@ export interface TranscriptSegment {
 
 export interface TranscriptSearchResult {
   segment_id: number;
+  meeting_id: number;
   order_index: number;
   speaker_name: string;
   start_time: number;
