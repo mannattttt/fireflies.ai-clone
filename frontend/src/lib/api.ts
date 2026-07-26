@@ -21,6 +21,18 @@ export const api = {
     return res.json();
   },
 
+  async createMeeting(data: any): Promise<MeetingDetail> {
+    const res = await fetch(`${API_BASE}/meetings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to create meeting');
+    return res.json();
+  },
+
   async toggleActionItem(id: number): Promise<ActionItem> {
     const res = await fetch(`${API_BASE}/action-items/${id}/toggle`, {
       method: 'POST',
