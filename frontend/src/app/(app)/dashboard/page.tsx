@@ -37,6 +37,7 @@ export default function DashboardPage() {
   const [fredInput, setFredInput] = useState("");
   const [fredMessages, setFredMessages] = useState<{ id: string; text: string; sender: "user" | "fred" }[]>([]);
   const [isFredLoading, setIsFredLoading] = useState(false);
+  const [isMobileFredOpen, setIsMobileFredOpen] = useState(false);
 
   const handleAskFredDashboard = async (questionText?: string) => {
     const q = questionText || fredInput;
@@ -498,6 +499,109 @@ export default function DashboardPage() {
           </div>
         </form>
       </div>
+
+      {/* Mobile Floating AskFred Button */}
+      <button
+        onClick={() => setIsMobileFredOpen(true)}
+        className="xl:hidden fixed bottom-18 right-4 z-40 bg-[#6c5ce7] text-white px-4 py-2.5 rounded-full shadow-xl flex items-center gap-2 text-xs font-semibold hover:bg-[#5a4bd4] transition-all border border-purple-400/30"
+      >
+        <SparklesIcon className="w-4 h-4 animate-pulse" />
+        <span>AskFred AI</span>
+      </button>
+
+      {/* Mobile AskFred Slide-Over Drawer */}
+      {isMobileFredOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex justify-end xl:hidden">
+          <div className="w-full max-w-sm bg-white dark:bg-[#16162a] text-gray-900 dark:text-gray-100 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-[#2a2a4a] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <SparklesIcon className="w-4 h-4 text-[#6c5ce7]" />
+                <span className="text-sm font-semibold">AskFred AI Assistant</span>
+              </div>
+              <button
+                onClick={() => setIsMobileFredOpen(false)}
+                className="p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Chat Body */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-4">
+              {fredMessages.length === 0 ? (
+                <div className="text-center py-4">
+                  <SparklesIcon className="w-8 h-8 text-[#6c5ce7] mx-auto mb-2" />
+                  <h4 className="text-sm font-semibold mb-1">Hi Mannat!</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Ask anything about your meetings</p>
+                  
+                  <div className="space-y-2">
+                    <button 
+                      onClick={() => handleAskFredDashboard("List my action items & todos from recent meetings")}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-left bg-gray-50 dark:bg-[#202038] border border-gray-100 dark:border-[#2a2a4a]"
+                    >
+                      <CheckBadgeIcon className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>List action items</span>
+                    </button>
+                    <button 
+                      onClick={() => handleAskFredDashboard("Summarize key decisions made across my meetings")}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-left bg-gray-50 dark:bg-[#202038] border border-gray-100 dark:border-[#2a2a4a]"
+                    >
+                      <span className="text-sm">🎯</span>
+                      <span>Key decisions</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {fredMessages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`text-xs p-2.5 rounded-xl max-w-[90%] ${
+                        msg.sender === "user"
+                          ? "bg-[#6c5ce7] text-white ml-auto rounded-br-none"
+                          : "bg-gray-100 dark:bg-[#202038] text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-[#2a2a4a] rounded-bl-none"
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
+                  ))}
+                  {isFredLoading && (
+                    <div className="bg-gray-100 dark:bg-[#202038] text-gray-500 text-xs p-2.5 rounded-xl flex items-center gap-2 w-max">
+                      <div className="w-3 h-3 border-2 border-[#6c5ce7] border-t-transparent rounded-full animate-spin" />
+                      Analyzing...
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Input Form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAskFredDashboard();
+              }}
+              className="p-3 border-t border-gray-100 dark:border-[#2a2a4a] flex gap-2"
+            >
+              <input
+                type="text"
+                placeholder="Ask anything..."
+                value={fredInput}
+                onChange={(e) => setFredInput(e.target.value)}
+                className="flex-1 text-xs bg-gray-50 dark:bg-[#202038] border border-gray-200 dark:border-[#2a2a4a] rounded-lg px-3 py-2 outline-none"
+              />
+              <button
+                type="submit"
+                disabled={!fredInput.trim() || isFredLoading}
+                className="px-3 py-2 bg-[#6c5ce7] text-white text-xs font-semibold rounded-lg disabled:opacity-40"
+              >
+                Send
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       <NewMeetingModal
         isOpen={isModalOpen}

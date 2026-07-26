@@ -42,6 +42,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(startTime ? parseFloat(startTime) : 0);
   const [mobileView, setMobileView] = useState<"transcript" | "ai">("transcript");
+  const [isPlayerCollapsed, setIsPlayerCollapsed] = useState(false);
 
   useEffect(() => {
     fetchMeeting();
@@ -241,27 +242,41 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
       <div className="flex-1 flex overflow-hidden flex-col lg:flex-row">
 
         {/* Left & Center: Player & Transcript */}
-        <div className={`flex-1 flex-col h-full p-4 gap-4 overflow-hidden ${mobileView === "transcript" ? "flex" : "hidden lg:flex"}`}>
+        <div className={`flex-1 flex-col h-full min-h-0 p-4 gap-3 overflow-hidden ${mobileView === "transcript" ? "flex" : "hidden lg:flex"}`}>
 
-          <div className="w-full max-w-4xl mx-auto shrink-0">
-            <MediaPlayer
-              durationSeconds={meeting.duration_seconds}
-              currentTime={currentTime}
-              isPlaying={isPlaying}
-              onPlayPause={() => setIsPlaying(!isPlaying)}
-              onSeek={(time) => setCurrentTime(time)}
-            />
-          </div>
+          {/* Collapsible Media Player */}
+          {!isPlayerCollapsed && (
+            <div className="w-full max-w-4xl mx-auto shrink-0 transition-all">
+              <MediaPlayer
+                durationSeconds={meeting.duration_seconds}
+                currentTime={currentTime}
+                isPlaying={isPlaying}
+                onPlayPause={() => setIsPlaying(!isPlaying)}
+                onSeek={(time) => setCurrentTime(time)}
+              />
+            </div>
+          )}
 
-          <div className="flex-1 w-full max-w-4xl mx-auto overflow-hidden">
-            <TranscriptPanel
-              segments={meeting.transcript_segments}
-              currentTime={currentTime}
-              onSegmentClick={(time) => {
-                setCurrentTime(time);
-                setIsPlaying(true);
-              }}
-            />
+          {/* Transcript Panel Container with Toggle */}
+          <div className="w-full max-w-4xl mx-auto flex-1 min-h-0 flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center px-1 pb-1">
+              <button
+                onClick={() => setIsPlayerCollapsed(!isPlayerCollapsed)}
+                className="text-xs text-[#6c5ce7] font-semibold hover:underline flex items-center gap-1"
+              >
+                {isPlayerCollapsed ? "▼ Show Media Player" : "▲ Expand Transcript (Hide Player)"}
+              </button>
+            </div>
+            <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+              <TranscriptPanel
+                segments={meeting.transcript_segments}
+                currentTime={currentTime}
+                onSegmentClick={(time) => {
+                  setCurrentTime(time);
+                  setIsPlaying(true);
+                }}
+              />
+            </div>
           </div>
 
         </div>
