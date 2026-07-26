@@ -33,6 +33,49 @@ export default function DashboardPage() {
   const [selectedTag, setSelectedTag] = useState<string>("All");
   const { addToast } = useToast();
 
+  // AskFred Dashboard State
+  const [fredInput, setFredInput] = useState("");
+  const [fredMessages, setFredMessages] = useState<{ id: string; text: string; sender: "user" | "fred" }[]>([]);
+  const [isFredLoading, setIsFredLoading] = useState(false);
+
+  const handleAskFredDashboard = async (questionText?: string) => {
+    const q = questionText || fredInput;
+    if (!q.trim() || isFredLoading) return;
+
+    const userMsg = { id: Date.now().toString(), text: q, sender: "user" as const };
+    setFredMessages(prev => [...prev, userMsg]);
+    if (!questionText) setFredInput("");
+    setIsFredLoading(true);
+
+    try {
+      if (meetings.length === 0) {
+        setFredMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          text: "No meetings found in your library yet! Upload or record a meeting to start asking Fred.",
+          sender: "fred"
+        }]);
+      } else {
+        // Query Gemini AskFred API using the latest meeting ID
+        const targetMeeting = meetings[0];
+        const answerText = await api.askFred(targetMeeting.id, q);
+        setFredMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          text: answerText,
+          sender: "fred"
+        }]);
+      }
+    } catch (err) {
+      console.error("AskFred failed", err);
+      setFredMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        text: "Sorry, I ran into an issue retrieving insights for this question. Please try again.",
+        sender: "fred"
+      }]);
+    } finally {
+      setIsFredLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchMeetings();
   }, [searchQuery, sortOrder, dateFrom, dateTo]);
@@ -65,7 +108,7 @@ export default function DashboardPage() {
     <div className="flex h-full bg-white dark:bg-[#121220] text-gray-900 dark:text-gray-100 transition-colors">
       
       {/* ── Left Panel: Channels ── */}
-      <div className="w-[220px] shrink-0 border-r border-gray-200 dark:border-[#2a2a4a] flex flex-col bg-white dark:bg-[#16162a]">
+      <div className="w-[220px] shrink-0 border-r border-gray-200 dark:border-[#2a2a4a] hidden md:flex flex-col bg-white dark:bg-[#16162a]">
         <div className="px-4 pt-5 pb-3 flex items-center justify-between">
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Meetings</h2>
           <button
@@ -345,53 +388,115 @@ export default function DashboardPage() {
       {/* ── Right Panel: Ask Fred ── */}
       <div className="w-[300px] shrink-0 border-l border-gray-200 dark:border-[#2a2a4a] bg-white dark:bg-[#16162a] text-gray-900 dark:text-gray-100 flex flex-col hidden xl:flex">
         {/* Fred Header */}
-        <div className="px-4 py-3 border-b border-gray-100 dark:border-[#2a2a4a] flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-gray-100 dark:bg-[#202038] flex items-center justify-center">
-            <SparklesIcon className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+        <div className="px-4 py-3 border-b border-gray-100 dark:border-[#2a2a4a] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-gray-100 dark:bg-[#202038] flex items-center justify-center">
+              <SparklesIcon className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+            </div>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Ask Fred</span>
           </div>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Ask Fred</span>
+          {fredMessages.length > 0 && (
+            <button
+              onClick={() => setFredMessages([])}
+              className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            >
+              Clear
+            </button>
+          )}
         </div>
 
-        {/* Greeting */}
-        <div className="flex-1 p-5 overflow-y-auto">
-          <div className="mb-6">
-            <div className="flex justify-center mb-4">
-              <SparklesIcon className="w-8 h-8 text-[#6c5ce7]" />
+        {/* Greeting & Chat Container */}
+        <div className="flex-1 p-4 overflow-y-auto space-y-4">
+          <div className="text-center py-2">
+            <div className="flex justify-center mb-2">
+              <SparklesIcon className="w-7 h-7 text-[#6c5ce7]" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 text-center">Hi Mannat!</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 text-center">Get ready for your meeting</p>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Hi Mannat!</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Ask me anything about your meetings</p>
           </div>
+
+          {/* Chat Messages */}
+          {fredMessages.length > 0 && (
+            <div className="space-y-2.5 pt-2">
+              {fredMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`text-xs p-2.5 rounded-xl max-w-[90%] leading-relaxed ${
+                    msg.sender === "user"
+                      ? "bg-[#6c5ce7] text-white ml-auto rounded-br-none"
+                      : "bg-gray-100 dark:bg-[#202038] text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-[#2a2a4a] rounded-bl-none shadow-xs"
+                  }`}
+                >
+                  {msg.text}
+                </div>
+              ))}
+              {isFredLoading && (
+                <div className="bg-gray-100 dark:bg-[#202038] text-gray-500 dark:text-gray-400 text-xs p-2.5 rounded-xl rounded-bl-none flex items-center gap-2 w-max border border-gray-200 dark:border-[#2a2a4a]">
+                  <div className="w-3 h-3 border-2 border-[#6c5ce7] border-t-transparent rounded-full animate-spin" />
+                  AskFred is analyzing...
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Quick Actions */}
-          <div className="space-y-3">
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left hover:bg-gray-50 dark:hover:bg-[#202038] transition-colors border border-gray-100 dark:border-[#2a2a4a]">
-              <CheckBadgeIcon className="w-5 h-5 text-emerald-500" />
-              <span className="text-gray-700 dark:text-gray-200">My action items</span>
-            </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left hover:bg-gray-50 dark:hover:bg-[#202038] transition-colors border border-gray-100 dark:border-[#2a2a4a]">
-              <span className="text-lg">🎯</span>
-              <span className="text-gray-700 dark:text-gray-200">Key decisions</span>
-            </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left hover:bg-gray-50 dark:hover:bg-[#202038] transition-colors border border-gray-100 dark:border-[#2a2a4a]">
-              <RocketLaunchIcon className="w-5 h-5 text-pink-500" />
-              <span className="text-gray-700 dark:text-gray-200">Key initiatives</span>
-            </button>
-          </div>
+          {fredMessages.length === 0 && (
+            <div className="space-y-2 pt-2">
+              <button 
+                onClick={() => handleAskFredDashboard("List my action items & todos from recent meetings")}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-left bg-gray-50 dark:bg-[#202038] hover:bg-gray-100 dark:hover:bg-[#262646] transition-colors border border-gray-100 dark:border-[#2a2a4a]"
+              >
+                <CheckBadgeIcon className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span className="text-gray-700 dark:text-gray-200">List my action items & todos</span>
+              </button>
+              <button 
+                onClick={() => handleAskFredDashboard("Summarize key decisions made across my meetings")}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-left bg-gray-50 dark:bg-[#202038] hover:bg-gray-100 dark:hover:bg-[#262646] transition-colors border border-gray-100 dark:border-[#2a2a4a]"
+              >
+                <span className="text-sm shrink-0">🎯</span>
+                <span className="text-gray-700 dark:text-gray-200">Key decisions</span>
+              </button>
+              <button 
+                onClick={() => handleAskFredDashboard("What are the key product & technical initiatives mentioned?")}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-left bg-gray-50 dark:bg-[#202038] hover:bg-gray-100 dark:hover:bg-[#262646] transition-colors border border-gray-100 dark:border-[#2a2a4a]"
+              >
+                <RocketLaunchIcon className="w-4 h-4 text-pink-500 shrink-0" />
+                <span className="text-gray-700 dark:text-gray-200">Key initiatives</span>
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* AskFred Input */}
-        <div className="p-3 border-t border-gray-100 dark:border-[#2a2a4a]">
-          <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-[#202038] border border-gray-200 dark:border-[#2a2a4a] rounded-lg">
-            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium"># My Meetings</span>
+        {/* AskFred Input Form */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleAskFredDashboard();
+          }}
+          className="p-3 border-t border-gray-100 dark:border-[#2a2a4a] space-y-2"
+        >
+          <div className="flex items-center justify-between px-2.5 py-1 bg-gray-50 dark:bg-[#202038] border border-gray-200 dark:border-[#2a2a4a] rounded-md text-[10px] text-gray-500 dark:text-gray-400">
+            <span className="font-semibold text-[#6c5ce7]"># All Meetings</span>
+            <span>Gemini 3.5</span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 mt-2 bg-white dark:bg-[#202038] border border-gray-200 dark:border-[#2a2a4a] rounded-lg">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#202038] border border-gray-200 dark:border-[#2a2a4a] rounded-lg">
             <input 
               type="text" 
-              placeholder="Ask anything. Type / to run AI skills." 
-              className="w-full text-xs bg-transparent outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-gray-100"
+              placeholder="Ask anything about your meetings..." 
+              value={fredInput}
+              onChange={(e) => setFredInput(e.target.value)}
+              disabled={isFredLoading}
+              className="flex-1 text-xs bg-transparent outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-gray-100 disabled:opacity-50"
             />
+            <button
+              type="submit"
+              disabled={!fredInput.trim() || isFredLoading}
+              className="p-1 bg-[#6c5ce7] hover:bg-[#5a4bd4] text-white rounded transition-colors disabled:opacity-40"
+            >
+              <SparklesIcon className="w-3.5 h-3.5" />
+            </button>
           </div>
-        </div>
+        </form>
       </div>
 
       <NewMeetingModal

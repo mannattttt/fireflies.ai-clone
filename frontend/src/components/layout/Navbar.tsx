@@ -71,22 +71,22 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="h-14 bg-white dark:bg-[#16162a] border-b border-gray-200 dark:border-[#2a2a4a] flex items-center justify-between px-6 sticky top-0 z-40 shrink-0 transition-colors">
+    <nav className="h-14 bg-white dark:bg-[#16162a] border-b border-gray-200 dark:border-[#2a2a4a] flex items-center justify-between px-3 sm:px-6 gap-2 sticky top-0 z-40 shrink-0 transition-colors">
       {/* Left: Page Title */}
 
       {/* Center: Search */}
-      <div className="flex-1 max-w-lg" ref={searchRef}>
+      <div className="flex-1 max-w-lg min-w-0" ref={searchRef}>
         <div className="relative group">
-          <MagnifyingGlassIcon className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <MagnifyingGlassIcon className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search by title or keyword"
-            className="w-full bg-gray-50 dark:bg-[#202038] border border-gray-200 dark:border-[#2a2a4a] text-gray-900 dark:text-gray-100 rounded-lg pl-9 pr-12 py-1.5 text-sm focus:bg-white dark:focus:bg-[#262646] focus:border-[#6c5ce7] focus:ring-1 focus:ring-[#6c5ce7] outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+            placeholder="Search title or keyword..."
+            className="w-full bg-gray-50 dark:bg-[#202038] border border-gray-200 dark:border-[#2a2a4a] text-gray-900 dark:text-gray-100 rounded-lg pl-8 sm:pl-9 pr-8 sm:pr-12 py-1.5 text-xs sm:text-sm focus:bg-white dark:focus:bg-[#262646] focus:border-[#6c5ce7] focus:ring-1 focus:ring-[#6c5ce7] outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 truncate"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => searchQuery.length >= 3 && setShowDropdown(true)}
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-[#2a2a4a] px-1.5 py-0.5 rounded font-mono">⌘K</span>
+          <span className="hidden sm:inline-block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-[#2a2a4a] px-1.5 py-0.5 rounded font-mono">⌘K</span>
 
           {/* Search Dropdown */}
           {showDropdown && (

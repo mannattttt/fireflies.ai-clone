@@ -41,6 +41,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
   // Player State
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(startTime ? parseFloat(startTime) : 0);
+  const [mobileView, setMobileView] = useState<"transcript" | "ai">("transcript");
 
   useEffect(() => {
     fetchMeeting();
@@ -117,18 +118,18 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
   return (
     <div className="flex flex-col h-full bg-gray-50/50 dark:bg-[#121220] transition-colors">
       {/* Top Header */}
-      <header className="h-14 bg-white dark:bg-[#16162a] border-b border-gray-200 dark:border-[#2a2a4a] flex items-center justify-between px-4 shrink-0 sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#202038] rounded-lg transition-colors">
+      <header className="min-h-14 py-2 bg-white dark:bg-[#16162a] border-b border-gray-200 dark:border-[#2a2a4a] flex flex-wrap items-center justify-between px-4 gap-2 shrink-0 sticky top-0 z-10">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <Link href="/dashboard" className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#202038] rounded-lg transition-colors shrink-0">
             <ArrowLeftIcon className="w-5 h-5" />
           </Link>
-          <div className="flex flex-col">
-            <h1 className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-tight">{meeting.title}</h1>
+          <div className="flex flex-col min-w-0">
+            <h1 className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-tight truncate max-w-[180px] sm:max-w-xs md:max-w-md">{meeting.title}</h1>
             <span className="text-xs text-gray-500 dark:text-gray-400">{new Date(meeting.date).toLocaleDateString()}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 relative">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Export Dropdown Button */}
           <div className="relative">
             <button
@@ -212,11 +213,35 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </header>
 
-      {/* Main Content: 3-Pane Layout */}
-      <div className="flex-1 flex overflow-hidden">
+      {/* Mobile/Tablet View Toggle (visible on < lg screens) */}
+      <div className="flex border-b border-gray-200 dark:border-[#2a2a4a] bg-white dark:bg-[#16162a] px-4 py-2 lg:hidden gap-2 shrink-0">
+        <button
+          onClick={() => setMobileView("transcript")}
+          className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+            mobileView === "transcript"
+              ? "bg-[#6c5ce7] text-white"
+              : "bg-gray-100 dark:bg-[#202038] text-gray-600 dark:text-gray-300"
+          }`}
+        >
+          Transcript Thread
+        </button>
+        <button
+          onClick={() => setMobileView("ai")}
+          className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+            mobileView === "ai"
+              ? "bg-[#6c5ce7] text-white"
+              : "bg-gray-100 dark:bg-[#202038] text-gray-600 dark:text-gray-300"
+          }`}
+        >
+          AI Summary & AskFred
+        </button>
+      </div>
+
+      {/* Main Content: 3-Pane Responsive Layout */}
+      <div className="flex-1 flex overflow-hidden flex-col lg:flex-row">
 
         {/* Left & Center: Player & Transcript */}
-        <div className="flex-1 flex flex-col h-full p-4 gap-4 overflow-hidden">
+        <div className={`flex-1 flex-col h-full p-4 gap-4 overflow-hidden ${mobileView === "transcript" ? "flex" : "hidden lg:flex"}`}>
 
           <div className="w-full max-w-4xl mx-auto shrink-0">
             <MediaPlayer
@@ -242,7 +267,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* Right Sidebar: AI Summary */}
-        <div className="w-[400px] shrink-0 border-l border-gray-200 hidden lg:block bg-white z-0">
+        <div className={`w-full lg:w-[400px] shrink-0 border-l border-gray-200 dark:border-[#2a2a4a] bg-white dark:bg-[#16162a] z-0 overflow-y-auto ${mobileView === "ai" ? "flex flex-col flex-1" : "hidden lg:flex lg:flex-col"}`}>
           <AISidebar meeting={meeting} />
         </div>
 

@@ -1,6 +1,6 @@
 import { MeetingListItem, MeetingDetail, ActionItem, TranscriptSearchResult } from './types';
 
-const API_BASE = '/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export const api = {
   async getMeetings(search?: string, dateFrom?: string, dateTo?: string, sort: string = 'desc'): Promise<MeetingListItem[]> {
