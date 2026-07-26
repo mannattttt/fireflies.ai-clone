@@ -86,5 +86,16 @@ export const api = {
     const res = await fetch(`${API_BASE}/meetings/search?q=${encodeURIComponent(query)}`);
     if (!res.ok) throw new Error('Failed to search transcripts');
     return res.json();
+  },
+
+  async askFred(meetingId: number, question: string): Promise<string> {
+    const res = await fetch(`${API_BASE}/meetings/${meetingId}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question }),
+    });
+    if (!res.ok) throw new Error('Failed to query AskFred AI');
+    const data = await res.json();
+    return data.answer;
   }
 };

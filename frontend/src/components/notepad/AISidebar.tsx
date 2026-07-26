@@ -10,6 +10,19 @@ import {
 import { CheckCircleIcon as CheckCircleSolidIcon } from "@heroicons/react/24/solid";
 import { api } from "@/lib/api";
 
+interface ChatMessage {
+  id: string;
+  sender: "user" | "fred";
+  text: string;
+}
+
+const presetQuestions = [
+  "What were the main takeaways?",
+  "Who spoke the most during this call?",
+  "List all action items mentioned.",
+  "What were the key decisions made?"
+];
+
 interface AISidebarProps {
   meeting: MeetingDetail;
   onTopicClick?: (topic: string) => void;
@@ -19,7 +32,36 @@ export default function AISidebar({ meeting, onTopicClick }: AISidebarProps) {
   const [activeTab, setActiveTab] = useState<"summary" | "tasks" | "topics">("summary");
   const [actionItems, setActionItems] = useState(meeting.action_items);
   const [newTaskText, setNewTaskText] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [isAskingFred, setIsAskingFred] = useState(false);
   const summary = meeting.summary;
+
+  const handleAskFred = async (questionText?: string) => {
+    const q = (questionText || chatInput).trim();
+    if (!q || isAskingFred) return;
+
+    const userMsg: ChatMessage = { id: Date.now().toString(), sender: "user", text: q };
+    setChatMessages(prev => [...prev, userMsg]);
+    setChatInput("");
+    setIsAskingFred(true);
+
+    try {
+      const answer = await api.askFred(meeting.id, q);
+      const fredMsg: ChatMessage = { id: (Date.now() + 1).toString(), sender: "fred", text: answer };
+      setChatMessages(prev => [...prev, fredMsg]);
+    } catch (err) {
+      console.error("AskFred chat failed:", err);
+      const errorMsg: ChatMessage = { 
+        id: (Date.now() + 1).toString(), 
+        sender: "fred", 
+        text: "Sorry, I couldn't process your question. Please ensure your Gemini API key is configured correctly." 
+      };
+      setChatMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setIsAskingFred(false);
+    }
+  };
 
   const handleToggleTask = async (id: number) => {
     try {
@@ -106,17 +148,82 @@ export default function AISidebar({ meeting, onTopicClick }: AISidebarProps) {
 
       <div className="flex-1 overflow-y-auto p-5">
         
-        {/* SUMMARY TAB */}
+        {/* SUMMARY & ASK FRED TAB */}
         {activeTab === "summary" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {/* AskFred Mock Input */}
-            <div className="relative">
-              <SparklesIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-brand-primary" />
-              <input 
-                type="text" 
-                placeholder="Ask AskFred anything..." 
-                className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
-              />
+            {/* AskFred Interactive Q&A Box */}
+            <div className="bg-brand-primary/5 border border-brand-primary/20 rounded-xl p-4 space-y-3">
+              <div className="flex items-center gap-2 text-brand-primary font-semibold text-xs uppercase tracking-wider">
+                <SparklesIcon className="w-4 h-4" />
+                AskFred AI Assistant
+              </div>
+
+              {/* Chat Message History */}
+              {chatMessages.length > 0 && (
+                <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                  {chatMessages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`text-xs p-2.5 rounded-xl max-w-[90%] leading-relaxed ${
+                        msg.sender === "user"
+                          ? "bg-brand-primary text-white ml-auto rounded-br-none"
+                          : "bg-white text-gray-800 border border-gray-200 shadow-sm rounded-bl-none"
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
+                  ))}
+                  {isAskingFred && (
+                    <div className="bg-white text-gray-500 border border-gray-200 shadow-sm text-xs p-2.5 rounded-xl rounded-bl-none flex items-center gap-2 w-max">
+                      <div className="w-3 h-3 border-2 border-brand-primary border-t-transparent rounded-full animate-spin" />
+                      AskFred is analyzing meeting...
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Preset Question Suggestions */}
+              {chatMessages.length === 0 && (
+                <div className="space-y-1.5 pt-1">
+                  <p className="text-[11px] text-gray-500 font-medium">Suggested questions:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {presetQuestions.map((pq, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleAskFred(pq)}
+                        className="text-[11px] bg-white border border-brand-primary/20 hover:border-brand-primary text-gray-700 hover:text-brand-primary px-2.5 py-1 rounded-lg transition-colors text-left"
+                      >
+                        &ldquo;{pq}&rdquo;
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Chat Input Form */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleAskFred();
+                }}
+                className="flex gap-2 pt-1"
+              >
+                <input 
+                  type="text" 
+                  placeholder="Ask a question about this meeting..." 
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  disabled={isAskingFred}
+                  className="flex-1 pl-3 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-brand-primary transition-all disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={!chatInput.trim() || isAskingFred}
+                  className="px-3 py-2 bg-brand-primary hover:bg-brand-primary-hover text-white text-xs font-semibold rounded-lg disabled:opacity-50 transition-colors shrink-0"
+                >
+                  Ask
+                </button>
+              </form>
             </div>
             
             {summary ? (
