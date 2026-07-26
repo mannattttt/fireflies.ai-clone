@@ -10,9 +10,11 @@ def parse_transcript(content: str, filename: str = "pasted.txt") -> list[dict]:
     Parse content based on filename extension or content shape.
     Returns a list of dicts: {"speaker": str, "start": float, "end": float, "text": str}
     """
-    if filename.endswith(".json"):
+    content_stripped = content.strip()
+    
+    if filename.endswith(".json") or content_stripped.startswith("[") or content_stripped.startswith("{"):
         return _parse_json(content)
-    elif filename.endswith(".vtt"):
+    elif filename.endswith(".vtt") or "-->" in content:
         return _parse_vtt(content)
     else:
         return _parse_text(content)

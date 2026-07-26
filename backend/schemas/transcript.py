@@ -19,6 +19,7 @@ class TranscriptSegmentResponse(BaseModel):
 class TranscriptSearchResult(BaseModel):
     """A matching transcript segment from an in-transcript search."""
     segment_id: int
+    meeting_id: int
     order_index: int
     speaker_name: str
     start_time: float

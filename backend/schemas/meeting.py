@@ -71,3 +71,13 @@ class MeetingDetail(BaseModel):
     action_items: List[ActionItemResponse]
 
     model_config = {"from_attributes": True}
+
+
+class ChatRequest(BaseModel):
+    """Payload for asking a question to AskFred."""
+    question: str
+
+
+class ChatResponse(BaseModel):
+    """AI answer response from AskFred."""
+    answer: str

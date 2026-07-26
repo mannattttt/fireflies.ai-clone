@@ -13,6 +13,18 @@ import AISidebar from "@/components/notepad/AISidebar";
 import EditMeetingModal from "@/components/dashboard/EditMeetingModal";
 import { useToast } from "@/components/ui/ToastProvider";
 
+import { 
+  exportSummaryAsMarkdown, 
+  exportTranscriptAsText, 
+  exportTranscriptAsVTT,
+  exportSummaryAsPDF
+} from "@/lib/exportUtils";
+import { 
+  ArrowDownTrayIcon, 
+  DocumentTextIcon, 
+  PrinterIcon 
+} from "@heroicons/react/24/outline";
+
 export default function MeetingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   // Use React.use to unwrap the Promise in Next.js 15+
   const resolvedParams = use(params);
@@ -23,6 +35,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
   const [meeting, setMeeting] = useState<MeetingDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const { addToast } = useToast();
 
   // Player State
@@ -115,7 +128,73 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative">
+          {/* Export Dropdown Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-brand-primary bg-brand-primary/10 hover:bg-brand-primary/20 px-3 py-1.5 rounded-lg transition-colors border border-brand-primary/20"
+            >
+              <ArrowDownTrayIcon className="w-4 h-4" />
+              Export
+            </button>
+
+            {/* Export Options Popover */}
+            {showExportMenu && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl p-1.5 z-50 space-y-0.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                <button
+                  onClick={() => {
+                    exportSummaryAsMarkdown(meeting);
+                    addToast("Summary downloaded as Markdown (.md)", "success");
+                    setShowExportMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 hover:text-brand-primary rounded-lg transition-colors text-left"
+                >
+                  <DocumentTextIcon className="w-4 h-4 text-brand-primary" />
+                  <span>Export Summary (.md)</span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    exportTranscriptAsText(meeting);
+                    addToast("Transcript downloaded as Text (.txt)", "success");
+                    setShowExportMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 hover:text-brand-primary rounded-lg transition-colors text-left"
+                >
+                  <DocumentTextIcon className="w-4 h-4 text-gray-400" />
+                  <span>Export Transcript (.txt)</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    exportTranscriptAsVTT(meeting);
+                    addToast("Subtitles downloaded (.vtt)", "success");
+                    setShowExportMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 hover:text-brand-primary rounded-lg transition-colors text-left"
+                >
+                  <DocumentTextIcon className="w-4 h-4 text-gray-400" />
+                  <span>Export Subtitles (.vtt)</span>
+                </button>
+
+                <hr className="my-1 border-gray-100" />
+
+                <button
+                  onClick={() => {
+                    setShowExportMenu(false);
+                    exportSummaryAsPDF(meeting);
+                    addToast("PDF Summary report ready for printing/saving", "success");
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 hover:text-brand-primary rounded-lg transition-colors text-left"
+                >
+                  <PrinterIcon className="w-4 h-4 text-gray-400" />
+                  <span>Print / Save as PDF</span>
+                </button>
+              </div>
+            )}
+          </div>
+
           <button
             onClick={() => setIsEditModalOpen(true)}
             className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors"

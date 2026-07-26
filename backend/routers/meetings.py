@@ -6,10 +6,11 @@ import json
 
 from db import get_db
 from models import Meeting, Participant, TranscriptSegment, Summary, KeyTopic, ActionItem
-from schemas.meeting import MeetingListItem, MeetingDetail, MeetingCreate, MeetingUpdate
+from schemas.meeting import MeetingListItem, MeetingDetail, MeetingCreate, MeetingUpdate, ChatRequest, ChatResponse
 from schemas.transcript import TranscriptSearchResult
 from services.ai_summary import generate_summary
 from services.transcript_parser import parse_transcript
+from services.ask_fred import ask_fred_about_meeting
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 
@@ -64,6 +65,7 @@ def global_search(q: str, db: Session = Depends(get_db)):
         match_end = match_start + len(q) if match_start != -1 else -1
         results.append(TranscriptSearchResult(
             segment_id=s.id,
+            meeting_id=s.meeting_id,
             order_index=s.order_index,
             speaker_name=s.speaker_name,
             start_time=s.start_time,
@@ -180,6 +182,7 @@ def search_transcript(id: int, q: str, db: Session = Depends(get_db)):
         match_end = match_start + len(q) if match_start != -1 else -1
         results.append(TranscriptSearchResult(
             segment_id=s.id,
+            meeting_id=s.meeting_id,
             order_index=s.order_index,
             speaker_name=s.speaker_name,
             start_time=s.start_time,
@@ -188,3 +191,23 @@ def search_transcript(id: int, q: str, db: Session = Depends(get_db)):
             match_end=match_end
         ))
     return results
+
+
+@router.post("/{id}/chat", response_model=ChatResponse)
+def ask_fred_chat(id: int, payload: ChatRequest, db: Session = Depends(get_db)):
+    meeting = db.query(Meeting).filter(Meeting.id == id).first()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+        
+    segments = [
+        {
+            "speaker_name": s.speaker_name,
+            "text": s.text,
+            "start_time": s.start_time,
+            "end_time": s.end_time
+        }
+        for s in meeting.transcript_segments
+    ]
+    
+    answer = ask_fred_about_meeting(segments, payload.question)
+    return ChatResponse(answer=answer)

@@ -51,3 +51,12 @@ def update_action_item(id: int, action_item: ActionItemUpdate, db: Session = Dep
     db.commit()
     db.refresh(db_action)
     return db_action
+
+@router.delete("/action-items/{id}")
+def delete_action_item(id: int, db: Session = Depends(get_db)):
+    db_action = db.query(ActionItem).filter(ActionItem.id == id).first()
+    if not db_action:
+        raise HTTPException(status_code=404, detail="Action item not found")
+    db.delete(db_action)
+    db.commit()
+    return {"message": "Action item deleted"}
