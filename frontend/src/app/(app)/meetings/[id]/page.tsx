@@ -1,0 +1,125 @@
+"use client";
+
+import { useEffect, useState, use } from "react";
+import Link from "next/link";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { api } from "@/lib/api";
+import { MeetingDetail } from "@/lib/types";
+
+import MediaPlayer from "@/components/notepad/MediaPlayer";
+import TranscriptPanel from "@/components/notepad/TranscriptPanel";
+import AISidebar from "@/components/notepad/AISidebar";
+
+export default function MeetingDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  // Use React.use to unwrap the Promise in Next.js 15+
+  const resolvedParams = use(params);
+  
+  const [meeting, setMeeting] = useState<MeetingDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Player State
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  useEffect(() => {
+    fetchMeeting();
+  }, [resolvedParams.id]);
+
+  // Mock player timer
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPlaying && meeting && currentTime < meeting.duration_seconds) {
+      interval = setInterval(() => {
+        setCurrentTime(t => Math.min(t + 1, meeting.duration_seconds));
+      }, 1000);
+    } else if (meeting && currentTime >= meeting.duration_seconds) {
+      setIsPlaying(false);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, currentTime, meeting]);
+
+  const fetchMeeting = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getMeeting(parseInt(resolvedParams.id));
+      setMeeting(data);
+    } catch (error) {
+      console.error("Failed to fetch meeting detail:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-gray-50/50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-500 font-medium animate-pulse">Loading Notepad...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!meeting) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center">
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Meeting Not Found</h2>
+        <Link href="/dashboard" className="text-brand-primary hover:underline">
+          Return to Notebook
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full bg-gray-50/50">
+      {/* Top Header */}
+      <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 shrink-0 gap-4 sticky top-0 z-10">
+        <Link href="/dashboard" className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+          <ArrowLeftIcon className="w-5 h-5" />
+        </Link>
+        <div className="flex flex-col">
+          <h1 className="text-sm font-semibold text-gray-900 leading-tight">{meeting.title}</h1>
+          <span className="text-xs text-gray-500">{new Date(meeting.date).toLocaleDateString()}</span>
+        </div>
+      </header>
+
+      {/* Main Content: 3-Pane Layout */}
+      <div className="flex-1 flex overflow-hidden">
+        
+        {/* Left & Center: Player & Transcript */}
+        <div className="flex-1 flex flex-col h-full p-4 gap-4 overflow-hidden">
+          
+          <div className="w-full max-w-4xl mx-auto shrink-0">
+            <MediaPlayer 
+              durationSeconds={meeting.duration_seconds}
+              currentTime={currentTime}
+              isPlaying={isPlaying}
+              onPlayPause={() => setIsPlaying(!isPlaying)}
+              onSeek={(time) => setCurrentTime(time)}
+            />
+          </div>
+
+          <div className="flex-1 w-full max-w-4xl mx-auto overflow-hidden">
+            <TranscriptPanel 
+              segments={meeting.transcript_segments}
+              currentTime={currentTime}
+              onSegmentClick={(time) => {
+                setCurrentTime(time);
+                setIsPlaying(true);
+              }}
+            />
+          </div>
+
+        </div>
+
+        {/* Right Sidebar: AI Summary */}
+        <div className="w-[400px] shrink-0 border-l border-gray-200 hidden lg:block bg-white z-0">
+          <AISidebar meeting={meeting} />
+        </div>
+        
+      </div>
+    </div>
+  );
+}
