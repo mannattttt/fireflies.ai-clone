@@ -135,24 +135,24 @@ export default function TranscriptPanel({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="px-6 py-3 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10 gap-4">
-        <h2 className="font-semibold text-gray-900 text-sm shrink-0">Thread</h2>
+    <div className="flex flex-col h-full bg-white dark:bg-[#16162a] rounded-xl border border-gray-200 dark:border-[#2a2a4a] text-gray-900 dark:text-gray-100 shadow-sm overflow-hidden transition-colors">
+      <div className="px-6 py-3 border-b border-gray-100 dark:border-[#2a2a4a] flex items-center justify-between sticky top-0 bg-white dark:bg-[#16162a] z-10 gap-4">
+        <h2 className="font-semibold text-gray-900 dark:text-gray-100 text-sm shrink-0">Thread</h2>
         
         {/* Inline Search Bar */}
         <div className="relative flex-1 max-w-xs">
-          <MagnifyingGlassIcon className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <MagnifyingGlassIcon className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
           <input 
             type="text" 
             placeholder="Search transcript..." 
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-8 pr-3 py-1 text-xs focus:bg-white focus:border-brand-primary outline-none transition-all"
+            className="w-full bg-gray-50 dark:bg-[#202038] border border-gray-200 dark:border-[#2a2a4a] text-gray-900 dark:text-gray-100 rounded-lg pl-8 pr-3 py-1 text-xs focus:bg-white dark:focus:bg-[#262646] focus:border-brand-primary outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
           />
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <div className="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md">
+          <div className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-[#202038] px-2.5 py-1 rounded-md">
             {segments.length} segments
           </div>
         </div>
@@ -178,10 +178,10 @@ export default function TranscriptPanel({
               {/* Message Content */}
               <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-semibold text-gray-900 text-sm">
+                  <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
                     {group[0].speaker_name}
                   </span>
-                  <span className="text-xs text-gray-400 font-mono">
+                  <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
                     {formatTimestamp(group[0].start_time)}
                   </span>
                 </div>
@@ -199,10 +199,10 @@ export default function TranscriptPanel({
                         onClick={() => onSegmentClick(seg.start_time)}
                         className={`text-sm leading-relaxed p-2.5 -mx-2 rounded-xl cursor-pointer transition-all relative group/seg ${
                           isHighlighted
-                            ? "bg-amber-50/80 border-l-4 border-amber-400 pl-3"
+                            ? "bg-amber-50/80 dark:bg-amber-950/40 border-l-4 border-amber-400 text-amber-950 dark:text-amber-200 pl-3"
                             : isActive 
-                            ? "bg-brand-primary/5 border-l-4 border-brand-primary pl-3 shadow-xs" 
-                            : "hover:bg-gray-50/80 text-gray-700 border-l-4 border-transparent pl-3"
+                            ? "bg-brand-primary/5 dark:bg-[#6c5ce7]/20 border-l-4 border-brand-primary text-gray-900 dark:text-gray-100 pl-3 shadow-xs" 
+                            : "hover:bg-gray-50/80 dark:hover:bg-[#202038] text-gray-700 dark:text-gray-300 border-l-4 border-transparent pl-3"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -211,7 +211,7 @@ export default function TranscriptPanel({
                           </div>
 
                           {/* Hover Action Bar */}
-                          <div className="opacity-0 group-hover/seg:opacity-100 transition-opacity flex items-center gap-1 bg-white border border-gray-200 shadow-sm rounded-lg p-0.5 shrink-0">
+                          <div className="opacity-0 group-hover/seg:opacity-100 transition-opacity flex items-center gap-1 bg-white dark:bg-[#202038] border border-gray-200 dark:border-[#2a2a4a] shadow-sm rounded-lg p-0.5 shrink-0">
                             {/* Bookmark / Highlight */}
                             <button
                               onClick={(e) => toggleHighlight(seg.id, e)}
@@ -252,10 +252,10 @@ export default function TranscriptPanel({
 
                         {/* Existing Comments List */}
                         {segComments.length > 0 && (
-                          <div className="mt-2 space-y-1 pt-1 border-t border-amber-200/50">
+                          <div className="mt-2 space-y-1 pt-1 border-t border-amber-200/50 dark:border-amber-800/40">
                             {segComments.map((c, i) => (
-                              <div key={i} className="text-xs bg-amber-100/70 text-amber-900 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
-                                <span className="font-semibold text-amber-700">Note:</span>
+                              <div key={i} className="text-xs bg-amber-100/70 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-transparent dark:border-amber-800/40 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
+                                <span className="font-semibold text-amber-700 dark:text-amber-400">Note:</span>
                                 {c}
                               </div>
                             ))}
@@ -275,7 +275,7 @@ export default function TranscriptPanel({
                               value={commentInput}
                               onChange={(e) => setCommentInput(e.target.value)}
                               autoFocus
-                              className="flex-1 px-3 py-1.5 bg-white border border-brand-primary/30 rounded-lg text-xs outline-none focus:border-brand-primary"
+                              className="flex-1 px-3 py-1.5 bg-white dark:bg-[#202038] border border-brand-primary/30 dark:border-[#2a2a4a] text-gray-900 dark:text-gray-100 rounded-lg text-xs outline-none focus:border-brand-primary transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                             />
                             <button
                               type="submit"

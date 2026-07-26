@@ -1,6 +1,7 @@
 import Navbar from "@/components/layout/Navbar";
 import Sidebar from "@/components/layout/Sidebar";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { ThemeProvider } from "@/components/ui/ThemeProvider";
 
 export default function AppLayout({
   children,
@@ -8,16 +9,18 @@ export default function AppLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ToastProvider>
-      <div className="h-screen flex flex-col bg-white">
-        <Navbar />
-        <div className="flex flex-1 overflow-hidden">
+    <ThemeProvider>
+      <ToastProvider>
+        <div className="h-screen flex bg-white dark:bg-[#121220] text-gray-900 dark:text-gray-100 overflow-hidden">
           <Sidebar />
-          <main className="flex-1 overflow-y-auto">
-            {children}
-          </main>
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <Navbar />
+            <main className="flex-1 overflow-y-auto bg-white dark:bg-[#121220]">
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
-    </ToastProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }

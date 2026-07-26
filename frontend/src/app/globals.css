@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-brand-primary: #6c5ce7;
   --color-brand-primary-hover: #5a4bd4;
@@ -26,6 +28,11 @@
   body {
     background-color: var(--color-surface-bg);
     color: var(--color-text-primary);
+  }
+
+  .dark body {
+    background-color: #121220;
+    color: #f3f4f6;
   }
 }
 

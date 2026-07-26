@@ -115,16 +115,16 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50/50">
+    <div className="flex flex-col h-full bg-gray-50/50 dark:bg-[#121220] transition-colors">
       {/* Top Header */}
-      <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 shrink-0 sticky top-0 z-10">
+      <header className="h-14 bg-white dark:bg-[#16162a] border-b border-gray-200 dark:border-[#2a2a4a] flex items-center justify-between px-4 shrink-0 sticky top-0 z-10">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+          <Link href="/dashboard" className="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#202038] rounded-lg transition-colors">
             <ArrowLeftIcon className="w-5 h-5" />
           </Link>
           <div className="flex flex-col">
-            <h1 className="text-sm font-semibold text-gray-900 leading-tight">{meeting.title}</h1>
-            <span className="text-xs text-gray-500">{new Date(meeting.date).toLocaleDateString()}</span>
+            <h1 className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-tight">{meeting.title}</h1>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{new Date(meeting.date).toLocaleDateString()}</span>
           </div>
         </div>
 
@@ -133,7 +133,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="flex items-center gap-1.5 text-xs font-semibold text-brand-primary bg-brand-primary/10 hover:bg-brand-primary/20 px-3 py-1.5 rounded-lg transition-colors border border-brand-primary/20"
+              className="flex items-center gap-1.5 text-xs font-semibold text-brand-primary bg-brand-primary/10 dark:bg-brand-primary/20 hover:bg-brand-primary/20 px-3 py-1.5 rounded-lg transition-colors border border-brand-primary/20"
             >
               <ArrowDownTrayIcon className="w-4 h-4" />
               Export
@@ -141,14 +141,14 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
 
             {/* Export Options Popover */}
             {showExportMenu && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl p-1.5 z-50 space-y-0.5 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#1a1a30] border border-gray-200 dark:border-[#2a2a4a] rounded-xl shadow-xl p-1.5 z-50 space-y-0.5 animate-in fade-in slide-in-from-top-2 duration-200">
                 <button
                   onClick={() => {
                     exportSummaryAsMarkdown(meeting);
                     addToast("Summary downloaded as Markdown (.md)", "success");
                     setShowExportMenu(false);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 hover:text-brand-primary rounded-lg transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#262646] hover:text-brand-primary rounded-lg transition-colors text-left"
                 >
                   <DocumentTextIcon className="w-4 h-4 text-brand-primary" />
                   <span>Export Summary (.md)</span>
@@ -160,9 +160,9 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
                     addToast("Transcript downloaded as Text (.txt)", "success");
                     setShowExportMenu(false);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 hover:text-brand-primary rounded-lg transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#262646] hover:text-brand-primary rounded-lg transition-colors text-left"
                 >
-                  <DocumentTextIcon className="w-4 h-4 text-gray-400" />
+                  <DocumentTextIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                   <span>Export Transcript (.txt)</span>
                 </button>
 
@@ -172,13 +172,13 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
                     addToast("Subtitles downloaded (.vtt)", "success");
                     setShowExportMenu(false);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 hover:text-brand-primary rounded-lg transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#262646] hover:text-brand-primary rounded-lg transition-colors text-left"
                 >
-                  <DocumentTextIcon className="w-4 h-4 text-gray-400" />
+                  <DocumentTextIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                   <span>Export Subtitles (.vtt)</span>
                 </button>
 
-                <hr className="my-1 border-gray-100" />
+                <hr className="my-1 border-gray-100 dark:border-[#2a2a4a]" />
 
                 <button
                   onClick={() => {
@@ -186,9 +186,9 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
                     exportSummaryAsPDF(meeting);
                     addToast("PDF Summary report ready for printing/saving", "success");
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 hover:text-brand-primary rounded-lg transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#262646] hover:text-brand-primary rounded-lg transition-colors text-left"
                 >
-                  <PrinterIcon className="w-4 h-4 text-gray-400" />
+                  <PrinterIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                   <span>Print / Save as PDF</span>
                 </button>
               </div>
@@ -197,14 +197,14 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
 
           <button
             onClick={() => setIsEditModalOpen(true)}
-            className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-[#202038] hover:bg-gray-200 dark:hover:bg-[#2a2a4a] px-3 py-1.5 rounded-lg transition-colors"
           >
             <PencilIcon className="w-4 h-4" />
             Edit
           </button>
           <button
             onClick={handleDeleteMeeting}
-            className="flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 hover:text-rose-700 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-950/60 px-3 py-1.5 rounded-lg transition-colors"
           >
             <TrashIcon className="w-4 h-4" />
             Delete

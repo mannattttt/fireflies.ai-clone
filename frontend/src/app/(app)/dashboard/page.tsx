@@ -17,6 +17,7 @@ import NewMeetingModal from "@/components/dashboard/NewMeetingModal";
 import { api } from "@/lib/api";
 import { MeetingListItem } from "@/lib/types";
 import { useToast } from "@/components/ui/ToastProvider";
+import { getTagForMeeting, PRESET_TAGS } from "@/lib/tagUtils";
 
 export default function DashboardPage() {
   const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
@@ -29,6 +30,7 @@ export default function DashboardPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [selectedTag, setSelectedTag] = useState<string>("All");
   const { addToast } = useToast();
 
   useEffect(() => {
@@ -60,12 +62,12 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="flex h-full bg-white">
+    <div className="flex h-full bg-white dark:bg-[#121220] text-gray-900 dark:text-gray-100 transition-colors">
       
       {/* ── Left Panel: Channels ── */}
-      <div className="w-[220px] shrink-0 border-r border-gray-200 flex flex-col bg-white">
+      <div className="w-[220px] shrink-0 border-r border-gray-200 dark:border-[#2a2a4a] flex flex-col bg-white dark:bg-[#16162a]">
         <div className="px-4 pt-5 pb-3 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-gray-900">Meetings</h2>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Meetings</h2>
           <button
             onClick={() => setIsModalOpen(true)}
             className="p-1 text-[#6c5ce7] hover:bg-[#6c5ce7]/10 rounded-md transition-colors"
@@ -117,11 +119,10 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
-
       {/* ── Center Panel: Meeting List ── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-[#121220]">
         {/* Tabs & Filters Header Row */}
-        <div className="px-6 pt-3 pb-3 flex flex-wrap items-center justify-between border-b border-gray-100 gap-3 relative">
+        <div className="px-6 pt-3 pb-3 flex flex-wrap items-center justify-between border-b border-gray-100 dark:border-[#2a2a4a] gap-3 relative">
           <div className="flex items-center gap-1">
             {tabs.map(tab => (
               <button
@@ -129,8 +130,8 @@ export default function DashboardPage() {
                 onClick={() => setActiveTab(tab)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                   activeTab === tab
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                    ? "bg-gray-100 dark:bg-[#202038] text-gray-900 dark:text-gray-100"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#1a1a30]"
                 }`}
               >
                 {tab}
@@ -141,13 +142,13 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2">
             {/* Search Input */}
             <div className="relative w-48 sm:w-56">
-              <MagnifyingGlassIcon className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <MagnifyingGlassIcon className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
               <input 
                 type="text" 
                 placeholder="Search title or participant..." 
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:bg-white focus:border-[#6c5ce7] transition-all"
+                className="w-full pl-8 pr-3 py-1 bg-gray-50 dark:bg-[#202038] border border-gray-200 dark:border-[#2a2a4a] text-gray-900 dark:text-gray-100 rounded-lg text-xs outline-none focus:bg-white dark:focus:bg-[#262646] focus:border-[#6c5ce7] transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
 
@@ -155,7 +156,7 @@ export default function DashboardPage() {
             <select
               value={sortOrder}
               onChange={e => setSortOrder(e.target.value as "desc" | "asc")}
-              className="bg-white border border-gray-200 text-gray-700 text-xs rounded-lg px-2 py-1 outline-none font-medium cursor-pointer focus:border-[#6c5ce7]"
+              className="bg-white dark:bg-[#202038] border border-gray-200 dark:border-[#2a2a4a] text-gray-700 dark:text-gray-200 text-xs rounded-lg px-2 py-1 outline-none font-medium cursor-pointer focus:border-[#6c5ce7]"
             >
               <option value="desc">Sort: Most Recent</option>
               <option value="asc">Sort: Oldest First</option>
@@ -167,7 +168,7 @@ export default function DashboardPage() {
               className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors flex items-center gap-1.5 ${
                 showFilterMenu || dateFrom || dateTo
                   ? "border-[#6c5ce7] text-[#6c5ce7] bg-[#6c5ce7]/5"
-                  : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                  : "border-gray-200 dark:border-[#2a2a4a] text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#202038]"
               }`}
             >
               Filters
@@ -178,32 +179,32 @@ export default function DashboardPage() {
 
             {/* Date Filter Dropdown Popover */}
             {showFilterMenu && (
-              <div className="absolute right-6 top-full mt-2 w-72 bg-white border border-gray-200 rounded-xl shadow-xl p-4 z-50 space-y-3">
-                <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wider">Filter by Date Range</h4>
+              <div className="absolute right-6 top-full mt-2 w-72 bg-white dark:bg-[#1a1a30] border border-gray-200 dark:border-[#2a2a4a] rounded-xl shadow-xl p-4 z-50 space-y-3">
+                <h4 className="text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider">Filter by Date Range</h4>
                 <div className="space-y-2">
                   <div>
-                    <label className="text-xs text-gray-500 block mb-1">From Date</label>
+                    <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">From Date</label>
                     <input 
                       type="date" 
                       value={dateFrom} 
                       onChange={e => setDateFrom(e.target.value)}
-                      className="w-full border border-gray-200 rounded-md px-2 py-1 text-xs outline-none focus:border-[#6c5ce7]"
+                      className="w-full border border-gray-200 dark:border-[#2a2a4a] bg-white dark:bg-[#202038] text-gray-900 dark:text-gray-100 rounded-md px-2 py-1 text-xs outline-none focus:border-[#6c5ce7]"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 block mb-1">To Date</label>
+                    <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">To Date</label>
                     <input 
                       type="date" 
                       value={dateTo} 
                       onChange={e => setDateTo(e.target.value)}
-                      className="w-full border border-gray-200 rounded-md px-2 py-1 text-xs outline-none focus:border-[#6c5ce7]"
+                      className="w-full border border-gray-200 dark:border-[#2a2a4a] bg-white dark:bg-[#202038] text-gray-900 dark:text-gray-100 rounded-md px-2 py-1 text-xs outline-none focus:border-[#6c5ce7]"
                     />
                   </div>
                 </div>
                 {(dateFrom || dateTo) && (
                   <button 
                     onClick={() => { setDateFrom(""); setDateTo(""); }}
-                    className="w-full text-center text-xs text-[#6c5ce7] font-medium hover:underline pt-1"
+                    className="text-xs text-rose-600 dark:text-rose-400 hover:underline font-medium"
                   >
                     Clear Date Filters
                   </button>
@@ -215,6 +216,27 @@ export default function DashboardPage() {
 
         {/* Meeting List */}
         <div className="flex-1 overflow-y-auto">
+          {/* Category Tag Filter Pills */}
+          <div className="px-6 py-2 bg-gray-50/60 dark:bg-[#16162a] border-b border-gray-100 dark:border-[#2a2a4a] flex items-center gap-1.5 overflow-x-auto">
+            <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mr-1 shrink-0">Tags:</span>
+            {["All", ...Object.keys(PRESET_TAGS)].map((tagName) => {
+              const isActive = selectedTag === tagName;
+              return (
+                <button
+                  key={tagName}
+                  onClick={() => setSelectedTag(tagName)}
+                  className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full border transition-all shrink-0 ${
+                    isActive
+                      ? "bg-[#6c5ce7] text-white border-[#6c5ce7] shadow-xs"
+                      : "bg-white dark:bg-[#202038] text-gray-600 dark:text-gray-300 border-gray-200 dark:border-[#2a2a4a] hover:bg-gray-100 dark:hover:bg-[#262646]"
+                  }`}
+                >
+                  {tagName === "All" ? "All Tags" : `#${tagName}`}
+                </button>
+              );
+            })}
+          </div>
+
           {loading ? (
             <div className="p-8">
               <div className="animate-pulse space-y-4">
@@ -229,31 +251,42 @@ export default function DashboardPage() {
                 ))}
               </div>
             </div>
-          ) : meetings.length > 0 ? (
-            <div className="divide-y divide-gray-50">
-              {meetings.map((meeting) => {
-                const duration = intervalToDuration({ start: 0, end: meeting.duration_seconds * 1000 });
-                const formattedDuration = `${duration.minutes || 0}m ${duration.seconds || 0}s`;
+          ) : (() => {
+            const filteredMeetings = selectedTag === "All" 
+              ? meetings 
+              : meetings.filter(m => getTagForMeeting(m.title).name === selectedTag);
 
-                return (
-                  <a
-                    key={meeting.id}
-                    href={`/meetings/${meeting.id}`}
-                    className="flex items-center gap-4 px-6 py-3.5 hover:bg-gray-50/80 transition-colors group cursor-pointer"
-                  >
-                    {/* Fireflies Logo Icon */}
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#6c5ce7]/20 to-[#a855f7]/20 flex items-center justify-center text-[#6c5ce7] shrink-0">
-                      <VideoCameraIcon className="w-4 h-4" />
-                    </div>
+            return filteredMeetings.length > 0 ? (
+              <div className="divide-y divide-gray-50 dark:divide-[#2a2a4a]">
+                {filteredMeetings.map((meeting) => {
+                  const duration = intervalToDuration({ start: 0, end: meeting.duration_seconds * 1000 });
+                  const formattedDuration = `${duration.minutes || 0}m ${duration.seconds || 0}s`;
+                  const tag = getTagForMeeting(meeting.title);
 
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 group-hover:text-[#6c5ce7] transition-colors truncate">
-                        {meeting.title}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {format(new Date(meeting.date), "EEE, MMM d yyyy, h:mm a")} · {formattedDuration}
-                      </p>
-                    </div>
+                  return (
+                    <a
+                      key={meeting.id}
+                      href={`/meetings/${meeting.id}`}
+                      className="flex items-center gap-4 px-6 py-3.5 hover:bg-gray-50/80 dark:hover:bg-[#1a1a30] transition-colors group cursor-pointer"
+                    >
+                      {/* Fireflies Logo Icon */}
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#6c5ce7]/20 to-[#a855f7]/20 flex items-center justify-center text-[#6c5ce7] shrink-0">
+                        <VideoCameraIcon className="w-4 h-4" />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-[#6c5ce7] transition-colors truncate">
+                            {meeting.title}
+                          </p>
+                          <span className={`inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-md border ${tag.bg} ${tag.color} ${tag.border} shrink-0`}>
+                            #{tag.name}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {format(new Date(meeting.date), "EEE, MMM d yyyy, h:mm a")} · {formattedDuration}
+                        </p>
+                      </div>
 
                     {/* Status Badge */}
                     {meeting.has_summary ? (
@@ -304,18 +337,19 @@ export default function DashboardPage() {
                 Capture
               </button>
             </div>
-          )}
+          );
+        })()}
         </div>
       </div>
 
       {/* ── Right Panel: Ask Fred ── */}
-      <div className="w-[300px] shrink-0 border-l border-gray-200 bg-white flex flex-col hidden xl:flex">
+      <div className="w-[300px] shrink-0 border-l border-gray-200 dark:border-[#2a2a4a] bg-white dark:bg-[#16162a] text-gray-900 dark:text-gray-100 flex flex-col hidden xl:flex">
         {/* Fred Header */}
-        <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-gray-100 flex items-center justify-center">
-            <SparklesIcon className="w-3.5 h-3.5 text-gray-500" />
+        <div className="px-4 py-3 border-b border-gray-100 dark:border-[#2a2a4a] flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-gray-100 dark:bg-[#202038] flex items-center justify-center">
+            <SparklesIcon className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
           </div>
-          <span className="text-sm font-medium text-gray-700">Ask Fred</span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Ask Fred</span>
         </div>
 
         {/* Greeting */}
@@ -324,37 +358,37 @@ export default function DashboardPage() {
             <div className="flex justify-center mb-4">
               <SparklesIcon className="w-8 h-8 text-[#6c5ce7]" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 text-center">Hi Mannat!</h3>
-            <p className="text-sm text-gray-600 text-center">Get ready for your meeting</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 text-center">Hi Mannat!</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 text-center">Get ready for your meeting</p>
           </div>
 
           {/* Quick Actions */}
           <div className="space-y-3">
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left hover:bg-gray-50 transition-colors border border-gray-100">
+            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left hover:bg-gray-50 dark:hover:bg-[#202038] transition-colors border border-gray-100 dark:border-[#2a2a4a]">
               <CheckBadgeIcon className="w-5 h-5 text-emerald-500" />
-              <span className="text-gray-700">My action items</span>
+              <span className="text-gray-700 dark:text-gray-200">My action items</span>
             </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left hover:bg-gray-50 transition-colors border border-gray-100">
+            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left hover:bg-gray-50 dark:hover:bg-[#202038] transition-colors border border-gray-100 dark:border-[#2a2a4a]">
               <span className="text-lg">🎯</span>
-              <span className="text-gray-700">Key decisions</span>
+              <span className="text-gray-700 dark:text-gray-200">Key decisions</span>
             </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left hover:bg-gray-50 transition-colors border border-gray-100">
+            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left hover:bg-gray-50 dark:hover:bg-[#202038] transition-colors border border-gray-100 dark:border-[#2a2a4a]">
               <RocketLaunchIcon className="w-5 h-5 text-pink-500" />
-              <span className="text-gray-700">Key initiatives</span>
+              <span className="text-gray-700 dark:text-gray-200">Key initiatives</span>
             </button>
           </div>
         </div>
 
         {/* AskFred Input */}
-        <div className="p-3 border-t border-gray-100">
-          <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
-            <span className="text-xs text-gray-400 font-medium"># My Meetings</span>
+        <div className="p-3 border-t border-gray-100 dark:border-[#2a2a4a]">
+          <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-[#202038] border border-gray-200 dark:border-[#2a2a4a] rounded-lg">
+            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium"># My Meetings</span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 mt-2 bg-white border border-gray-200 rounded-lg">
+          <div className="flex items-center gap-2 px-3 py-2 mt-2 bg-white dark:bg-[#202038] border border-gray-200 dark:border-[#2a2a4a] rounded-lg">
             <input 
               type="text" 
               placeholder="Ask anything. Type / to run AI skills." 
-              className="flex-1 text-sm outline-none bg-transparent placeholder:text-gray-400"
+              className="w-full text-xs bg-transparent outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-gray-100"
             />
           </div>
         </div>

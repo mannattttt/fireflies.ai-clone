@@ -3,24 +3,24 @@ import { CheckCircleIcon } from "@heroicons/react/24/solid";
 
 export default function MarketingPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-white dark:bg-[#121220] text-gray-900 dark:text-gray-100 transition-colors">
       {/* Navbar */}
       <header className="flex items-center justify-between px-8 py-6 max-w-7xl mx-auto w-full">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-md bg-gradient-to-tr from-brand-primary to-brand-secondary flex items-center justify-center text-white font-bold text-xl">
             F
           </div>
-          <span className="text-xl font-bold text-gray-900 tracking-tight">
+          <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
             Fireflies.ai
           </span>
         </div>
-        <nav className="hidden md:flex gap-8 items-center text-base font-medium text-gray-600">
+        <nav className="hidden md:flex gap-8 items-center text-base font-medium text-gray-600 dark:text-gray-300">
           <Link href="#features" className="hover:text-brand-primary transition-colors">Features</Link>
           <Link href="#use-cases" className="hover:text-brand-primary transition-colors">Use Cases</Link>
           <Link href="#pricing" className="hover:text-brand-primary transition-colors">Pricing</Link>
         </nav>
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-base font-medium text-gray-700 hover:text-black">
+          <Link href="/dashboard" className="text-base font-medium text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white">
             Log in
           </Link>
           <Link href="/dashboard" className="bg-brand-primary text-white px-6 py-2.5 rounded-full text-base font-semibold hover:bg-brand-primary-hover transition-colors shadow-lg shadow-brand-primary/20">
@@ -32,17 +32,17 @@ export default function MarketingPage() {
       {/* Hero Section */}
       <main className="flex-1">
         <section className="pt-20 pb-32 px-4 text-center max-w-5xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 tracking-tight mb-8 leading-tight">
+          <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-8 leading-tight">
             Automate your <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary">meeting notes</span>
           </h1>
-          <p className="text-xl text-gray-500 mb-12 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-gray-500 dark:text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed">
             Fireflies.ai helps your team record, transcribe, search, and analyze voice conversations.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link href="/dashboard" className="bg-brand-primary text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-brand-primary-hover transition-transform hover:scale-105 shadow-xl shadow-brand-primary/20">
               Start for Free
             </Link>
-            <button className="bg-white text-gray-700 border border-gray-200 px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-50 transition-colors">
+            <button className="bg-white dark:bg-[#1a1a30] text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 px-8 py-4 rounded-full text-lg font-semibold hover:bg-gray-50 dark:hover:bg-[#262646] transition-colors">
               Request Demo
             </button>
           </div>
@@ -139,11 +139,11 @@ export default function MarketingPage() {
         </section>
 
         {/* Features */}
-        <section className="bg-gray-50 py-24">
+        <section className="bg-gray-50 dark:bg-[#16162a] py-24 transition-colors">
           <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Everything you need for better meetings</h2>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">Capture every detail and make your meetings instantly searchable.</p>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Everything you need for better meetings</h2>
+              <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">Capture every detail and make your meetings instantly searchable.</p>
             </div>
             <div className="grid md:grid-cols-3 gap-8">
               {[
@@ -151,12 +151,12 @@ export default function MarketingPage() {
                 { title: "AI Super Summaries", desc: "Get detailed overviews, action items, and key takeaways generated instantly." },
                 { title: "Smart Search", desc: "Find exactly what you're looking for in seconds across your entire meeting history." }
               ].map((feature, i) => (
-                <div key={i} className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div key={i} className="bg-white dark:bg-[#1a1a30] p-8 rounded-2xl border border-gray-100 dark:border-[#2a2a4a] shadow-sm hover:shadow-md transition-shadow">
                   <div className="w-12 h-12 bg-brand-primary/10 text-brand-primary rounded-xl flex items-center justify-center mb-6">
                     <CheckCircleIcon className="w-6 h-6" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-                  <p className="text-gray-600 leading-relaxed">{feature.desc}</p>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{feature.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{feature.desc}</p>
                 </div>
               ))}
             </div>
@@ -165,15 +165,15 @@ export default function MarketingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 py-12 px-8">
+      <footer className="bg-white dark:bg-[#121220] border-t border-gray-100 dark:border-[#2a2a4a] py-12 px-8 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded bg-gradient-to-tr from-brand-primary to-brand-secondary flex items-center justify-center text-white font-bold text-xs">
               F
             </div>
-            <span className="font-bold text-gray-900">Fireflies.ai Clone</span>
+            <span className="font-bold text-gray-900 dark:text-white">Fireflies.ai Clone</span>
           </div>
-          <p className="text-gray-500 text-sm">© {new Date().getFullYear()} Fireflies.ai Clone. All rights reserved.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">© {new Date().getFullYear()} Fireflies.ai Clone. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -62,13 +62,13 @@ export default function NewMeetingModal({ isOpen, onClose, onSuccess }: NewMeeti
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-text-primary">Add New Meeting</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white dark:bg-[#1a1a30] text-gray-900 dark:text-gray-100 rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] border border-gray-200 dark:border-[#2a2a4a] transition-colors">
+        <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-[#2a2a4a]">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Add New Meeting</h2>
           <button 
             onClick={onClose}
-            className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#202038] transition-colors"
           >
             <XMarkIcon className="w-6 h-6" />
           </button>
@@ -77,11 +77,11 @@ export default function NewMeetingModal({ isOpen, onClose, onSuccess }: NewMeeti
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 flex flex-col gap-6">
           <div className="flex flex-col sm:flex-row gap-6">
             <div className="flex-1 space-y-2">
-              <label className="text-sm font-medium text-text-secondary block">Meeting Title</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">Meeting Title</label>
               <input 
                 type="text" 
                 required
-                className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition-all"
+                className="w-full border border-gray-200 dark:border-[#2a2a4a] bg-white dark:bg-[#202038] text-gray-900 dark:text-gray-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 placeholder="e.g., Q4 Planning Sync"
                 value={title}
                 onChange={e => setTitle(e.target.value)}
@@ -89,11 +89,11 @@ export default function NewMeetingModal({ isOpen, onClose, onSuccess }: NewMeeti
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium text-text-secondary block">Date</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">Date</label>
               <input 
                 type="date" 
                 required
-                className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition-all"
+                className="w-full border border-gray-200 dark:border-[#2a2a4a] bg-white dark:bg-[#202038] text-gray-900 dark:text-gray-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition-all"
                 value={date}
                 onChange={e => setDate(e.target.value)}
               />
@@ -101,57 +101,53 @@ export default function NewMeetingModal({ isOpen, onClose, onSuccess }: NewMeeti
           </div>
           
           <div className="space-y-3">
-            <label className="text-sm font-medium text-text-secondary block">Meeting Transcript</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">Meeting Transcript</label>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <label className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 hover:bg-gray-50 hover:border-brand-primary cursor-pointer transition-colors group">
-                <ArrowUpTrayIcon className="w-8 h-8 text-gray-400 group-hover:text-brand-primary mb-2" />
-                <span className="text-sm font-medium text-text-secondary group-hover:text-brand-primary">Upload File</span>
-                <span className="text-xs text-text-tertiary mt-1">.txt, .json, .vtt</span>
+              <label className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-[#2a2a4a] rounded-lg p-6 hover:bg-gray-50 dark:hover:bg-[#202038] hover:border-brand-primary cursor-pointer transition-colors group">
+                <ArrowUpTrayIcon className="w-8 h-8 text-gray-400 dark:text-gray-500 group-hover:text-brand-primary mb-2" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-brand-primary">Upload File</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">.txt, .json, .vtt</span>
                 <input type="file" accept=".txt,.json,.vtt" className="hidden" onChange={handleFileUpload} />
               </label>
               
-              <div className="flex items-center justify-center text-text-tertiary font-medium">OR</div>
+              <div className="flex items-center justify-center text-gray-400 dark:text-gray-500 font-medium">OR</div>
               
-              <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 hover:bg-gray-50 hover:border-brand-primary transition-colors group cursor-pointer" onClick={() => document.getElementById("transcript-textarea")?.focus()}>
-                <DocumentTextIcon className="w-8 h-8 text-gray-400 group-hover:text-brand-primary mb-2" />
-                <span className="text-sm font-medium text-text-secondary group-hover:text-brand-primary">Paste Text</span>
-                <span className="text-xs text-text-tertiary mt-1">Paste transcript below</span>
+              <div className="flex-1 flex flex-col items-center justify-center border border-gray-200 dark:border-[#2a2a4a] bg-gray-50 dark:bg-[#202038] rounded-lg p-6 text-center">
+                <DocumentTextIcon className="w-8 h-8 text-gray-400 dark:text-gray-500 mb-2" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Paste Text Below</span>
               </div>
             </div>
             
             {fileName && (
-              <div className="bg-brand-primary/5 text-brand-primary text-sm px-3 py-2 rounded-md font-medium border border-brand-primary/20 flex items-center gap-2">
+              <div className="text-xs font-medium text-brand-primary bg-brand-primary/10 dark:bg-brand-primary/20 p-2.5 rounded-lg flex items-center gap-2">
                 <DocumentTextIcon className="w-4 h-4" />
-                File loaded: {fileName}
+                Loaded: {fileName}
               </div>
             )}
             
             <textarea 
-              id="transcript-textarea"
+              rows={5}
               required
-              placeholder="Speaker A: Hello everyone...\nSpeaker B: Hi, let's get started..."
-              className="w-full border border-gray-200 rounded-lg p-4 h-48 focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition-all font-mono text-sm resize-none"
+              placeholder="Speaker A: Hello team...\nSpeaker B: Thanks for joining today."
+              className="w-full border border-gray-200 dark:border-[#2a2a4a] bg-white dark:bg-[#202038] text-gray-900 dark:text-gray-100 rounded-lg p-3 text-xs focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
               value={transcriptText}
               onChange={e => setTranscriptText(e.target.value)}
             />
-            <p className="text-xs text-text-tertiary">
-              For best results, use "Speaker: Text" format on each line.
-            </p>
           </div>
           
-          <div className="pt-4 border-t border-gray-100 flex justify-end gap-3 mt-auto">
+          <div className="pt-4 border-t border-gray-100 dark:border-[#2a2a4a] flex justify-end gap-3">
             <button 
               type="button" 
               onClick={onClose}
-              className="px-5 py-2.5 rounded-lg font-medium text-text-secondary hover:bg-gray-100 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#202038] rounded-lg transition-colors"
             >
               Cancel
             </button>
             <button 
               type="submit" 
               disabled={loading || !title || !transcriptText}
-              className="px-5 py-2.5 rounded-lg font-medium text-white bg-brand-primary hover:bg-brand-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-5 py-2 text-sm font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover rounded-lg transition-colors disabled:opacity-50 shadow-md shadow-brand-primary/20 flex items-center gap-2"
             >
               {loading ? (
                 <>
