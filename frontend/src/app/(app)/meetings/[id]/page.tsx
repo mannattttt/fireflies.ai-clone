@@ -283,7 +283,7 @@ export default function MeetingDetailPage({ params }: { params: Promise<{ id: st
 
         {/* Right Sidebar: AI Summary */}
         <div className={`w-full lg:w-[400px] shrink-0 border-l border-gray-200 dark:border-[#2a2a4a] bg-white dark:bg-[#16162a] z-0 overflow-y-auto ${mobileView === "ai" ? "flex flex-col flex-1" : "hidden lg:flex lg:flex-col"}`}>
-          <AISidebar meeting={meeting} />
+          <AISidebar meeting={meeting} onMeetingUpdate={(updated) => setMeeting(updated)} />
         </div>
 
       </div>

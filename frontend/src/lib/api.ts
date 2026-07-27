@@ -97,5 +97,13 @@ export const api = {
     if (!res.ok) throw new Error('Failed to query AskFred AI');
     const data = await res.json();
     return data.answer;
+  },
+
+  async regenerateSummary(meetingId: number): Promise<MeetingDetail> {
+    const res = await fetch(`${API_BASE}/meetings/${meetingId}/regenerate-summary`, {
+      method: 'POST',
+    });
+    if (!res.ok) throw new Error('Failed to regenerate summary');
+    return res.json();
   }
 };

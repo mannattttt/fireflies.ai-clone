@@ -5,7 +5,8 @@ import {
   CheckCircleIcon, 
   HashtagIcon,
   ChevronRightIcon,
-  TrashIcon
+  TrashIcon,
+  ArrowPathIcon
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon as CheckCircleSolidIcon } from "@heroicons/react/24/solid";
 import { api } from "@/lib/api";
@@ -26,16 +27,30 @@ const presetQuestions = [
 interface AISidebarProps {
   meeting: MeetingDetail;
   onTopicClick?: (topic: string) => void;
+  onMeetingUpdate?: (updated: MeetingDetail) => void;
 }
 
-export default function AISidebar({ meeting, onTopicClick }: AISidebarProps) {
+export default function AISidebar({ meeting, onTopicClick, onMeetingUpdate }: AISidebarProps) {
   const [activeTab, setActiveTab] = useState<"summary" | "tasks" | "topics">("summary");
   const [actionItems, setActionItems] = useState(meeting.action_items);
   const [newTaskText, setNewTaskText] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isAskingFred, setIsAskingFred] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   const summary = meeting.summary;
+
+  const handleRegenerateSummary = async () => {
+    setIsRegenerating(true);
+    try {
+      const updated = await api.regenerateSummary(meeting.id);
+      if (onMeetingUpdate) onMeetingUpdate(updated);
+    } catch (err) {
+      console.error("Failed to regenerate summary:", err);
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
 
   const handleAskFred = async (questionText?: string) => {
     const q = (questionText || chatInput).trim();
@@ -228,9 +243,20 @@ export default function AISidebar({ meeting, onTopicClick }: AISidebarProps) {
             
             {summary ? (
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2 uppercase tracking-wider">
-                  Meeting Summary
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 uppercase tracking-wider">
+                    Meeting Summary
+                  </h3>
+                  <button
+                    onClick={handleRegenerateSummary}
+                    disabled={isRegenerating}
+                    title="Regenerate AI Summary"
+                    className="flex items-center gap-1 text-[10px] font-medium text-[#6c5ce7] hover:text-[#5a4bd4] disabled:opacity-50 transition-colors"
+                  >
+                    <ArrowPathIcon className={`w-3.5 h-3.5 ${isRegenerating ? 'animate-spin' : ''}`} />
+                    {isRegenerating ? 'Regenerating...' : 'Regenerate'}
+                  </button>
+                </div>
                 <div className="bg-white dark:bg-[#1a1a30] p-4 rounded-xl border border-gray-200 dark:border-[#2a2a4a] shadow-sm text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-3">
                   {summary.overview_text.split('\n').map((paragraph, i) => (
                     <p key={i}>{paragraph}</p>
@@ -239,7 +265,15 @@ export default function AISidebar({ meeting, onTopicClick }: AISidebarProps) {
               </div>
             ) : (
               <div className="p-4 bg-gray-50 dark:bg-[#1a1a30] rounded-xl border border-gray-200 dark:border-[#2a2a4a] text-xs text-gray-500 dark:text-gray-400 text-center">
-                No summary available for this meeting.
+                <p className="mb-2">No summary available for this meeting.</p>
+                <button
+                  onClick={handleRegenerateSummary}
+                  disabled={isRegenerating}
+                  className="inline-flex items-center gap-1 text-[#6c5ce7] hover:text-[#5a4bd4] font-medium disabled:opacity-50"
+                >
+                  <ArrowPathIcon className={`w-3.5 h-3.5 ${isRegenerating ? 'animate-spin' : ''}`} />
+                  {isRegenerating ? 'Generating...' : 'Generate Summary'}
+                </button>
               </div>
             )}
             

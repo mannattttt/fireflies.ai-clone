@@ -60,25 +60,55 @@ def _segments_to_text(segments: list[dict]) -> str:
 
 def _fallback_ask_fred(segments: list[dict], question: str) -> str:
     """
-    Smart fallback answer generator for AskFred when API hits rate limit.
+    Smart fallback answer generator for AskFred when API is unavailable.
+    Handles conversational queries and extracts real content from transcript segments.
     """
-    q_lower = question.lower()
+    q_lower = question.lower().strip()
+    speakers = list(dict.fromkeys(s.get("speaker_name", "Participant") for s in segments))
+    speaker_str = ", ".join(speakers[:4]) if speakers else "the team"
     
+    # Gather all transcript text for context
+    all_text = [s.get("text", "") for s in segments if len(s.get("text", "")) > 10]
+
+    # Handle greetings and casual conversation
+    greetings = ["hi", "hello", "hey", "hii", "hiii", "yo", "sup", "howdy", "hola", "greetings"]
+    if q_lower in greetings or q_lower.rstrip("!") in greetings:
+        return f"Hey there! 👋 I'm AskFred, your AI meeting assistant. I can help you with insights from your meetings. Try asking me things like:\n\n• \"What were the main takeaways?\"\n• \"List all action items\"\n• \"Who were the participants?\"\n• \"Summarize key decisions\"\n\nWhat would you like to know?"
+
+    # Handle thanks / bye
+    if any(w in q_lower for w in ["thank", "thanks", "bye", "goodbye", "see you"]):
+        return "You're welcome! Feel free to ask me anything about your meetings anytime. 😊"
+
+    # Handle "how are you" / "what can you do"
+    if any(w in q_lower for w in ["how are you", "what can you do", "help", "what do you do"]):
+        return "I'm AskFred, your AI meeting assistant! I can help you:\n\n• Summarize your meetings\n• Find action items and tasks\n• Identify key decisions\n• Tell you who participated\n• Answer specific questions about what was discussed\n\nJust ask away!"
+
     if "action" in q_lower or "todo" in q_lower or "task" in q_lower:
         items = []
-        for s in segments[:10]:
+        for s in segments:
             t = s.get("text", "")
             if any(w in t.lower() for w in ["will", "need", "should", "action", "task", "by"]):
-                items.append(f"• **{s.get('speaker_name', 'Team')}**: {t}")
+                items.append(f"• {s.get('speaker_name', 'Team')}: {t[:100]}")
+            if len(items) >= 4:
+                break
         if items:
-            return "Based on the meeting transcript, here are key action items discussed:\n\n" + "\n".join(items[:4])
-        return "Key action items mentioned include completing dark mode interfaces, updating task progress by Friday, and reviewing sprint deliverables."
+            return "Based on the meeting transcript, here are the key action items discussed:\n\n" + "\n".join(items)
+        return f"The participants ({speaker_str}) discussed several topics but no explicit action items were captured in this segment."
 
-    if "decision" in q_lower or "decided" in q_lower or "key" in q_lower:
-        return "The key decisions made during the call were to prioritize dark mode and customizable notification controls for the immediate release, while deferring offline caching to the following sprint."
+    if "decision" in q_lower or "decided" in q_lower:
+        snippets = [t for t in all_text if any(w in t.lower() for w in ["decide", "agree", "go with", "finalize", "approve"])][:3]
+        if snippets:
+            return "Key decisions from the meeting:\n\n" + "\n".join(f"• {s}" for s in snippets)
+        return f"The meeting between {speaker_str} covered several discussion points. Specific decisions can be reviewed in the full transcript."
 
-    if "who" in q_lower or "speaker" in q_lower or "spoke" in q_lower:
-        speakers = list(dict.fromkeys(s.get("speaker_name", "Participant") for s in segments))
-        return f"The main participants in this call were {', '.join(speakers)}. Discussion was active across all team members."
+    if "who" in q_lower or "speaker" in q_lower or "spoke" in q_lower or "participant" in q_lower:
+        return f"The participants in this meeting were: {speaker_str}."
 
-    return f"Based on the meeting transcript, the team discussed roadmap priorities, feature status updates, and action items. (Note: Gemini API rate limit reached, displaying intelligent summary fallback)."
+    if "takeaway" in q_lower or "summary" in q_lower or "summarize" in q_lower or "main" in q_lower:
+        preview = " ".join(all_text[:3])[:250] if all_text else "general topics"
+        return f"The meeting between {speaker_str} covered the following key points: {preview}."
+
+    # Generic fallback — conversational tone
+    topic_count = len(all_text)
+    return f"Great question! The meeting with {speaker_str} covered {topic_count} discussion points. You can ask me more specific questions like 'What were the action items?' or 'Summarize the key decisions' for detailed insights."
+

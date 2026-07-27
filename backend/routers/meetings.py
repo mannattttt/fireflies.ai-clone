@@ -211,3 +211,56 @@ def ask_fred_chat(id: int, payload: ChatRequest, db: Session = Depends(get_db)):
     
     answer = ask_fred_about_meeting(segments, payload.question)
     return ChatResponse(answer=answer)
+
+
+@router.post("/{id}/regenerate-summary", response_model=MeetingDetail)
+def regenerate_summary(id: int, db: Session = Depends(get_db)):
+    """
+    Regenerate the AI summary for a meeting from its stored transcript segments.
+    Replaces any existing summary, key topics, and action items in the DB.
+    Useful when the original generation hit a rate limit and saved fallback text.
+    """
+    meeting = db.query(Meeting).filter(Meeting.id == id).first()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+
+    if not meeting.transcript_segments:
+        raise HTTPException(status_code=400, detail="No transcript segments to summarize")
+
+    segments = [
+        {
+            "speaker_name": s.speaker_name,
+            "text": s.text,
+            "start_time": s.start_time,
+            "end_time": s.end_time
+        }
+        for s in meeting.transcript_segments
+    ]
+
+    ai_result = generate_summary(segments)
+
+    # Delete existing summary, topics, and action items
+    if meeting.summary:
+        db.delete(meeting.summary)
+    for topic in meeting.key_topics:
+        db.delete(topic)
+    for item in meeting.action_items:
+        db.delete(item)
+    db.flush()
+
+    # Save fresh results
+    summary = Summary(meeting_id=meeting.id, overview_text=ai_result["summary"])
+    db.add(summary)
+
+    for i, topic in enumerate(ai_result["key_topics"]):
+        kt = KeyTopic(meeting_id=meeting.id, topic_text=topic, order_index=i)
+        db.add(kt)
+
+    for action in ai_result["action_items"]:
+        ai = ActionItem(meeting_id=meeting.id, text=action, is_completed=False)
+        db.add(ai)
+
+    db.commit()
+    db.refresh(meeting)
+    return meeting
+

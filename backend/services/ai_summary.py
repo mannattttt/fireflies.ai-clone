@@ -93,11 +93,12 @@ Transcript:
 
 def _fallback_summary(segments: list[dict]) -> dict:
     """
-    Intelligent fallback summary generator when Gemini API hits quota or is unavailable.
+    Intelligent fallback summary generator when Gemini API is unavailable.
+    Extracts real content from transcript segments.
     """
     if not segments:
         return {
-            "summary": "The meeting was held with no recorded transcript content.",
+            "summary": "No transcript content was recorded for this meeting.",
             "key_topics": ["General Meeting"],
             "action_items": ["Review meeting agenda"]
         }
@@ -105,31 +106,46 @@ def _fallback_summary(segments: list[dict]) -> dict:
     speakers = list(dict.fromkeys(s.get("speaker_name", "Participant") for s in segments))
     speaker_str = ", ".join(speakers[:4])
 
+    # Extract meaningful text lines
     sample_lines = [s.get("text", "") for s in segments if len(s.get("text", "")) > 10]
-    first_few = " ".join(sample_lines[:3])
+    preview = " ".join(sample_lines[:3])[:250] if sample_lines else "various topics"
 
     summary_text = (
-        f"The team ({speaker_str}) met to discuss key progress and roadmap objectives. "
-        f"Key discussions focused on: {first_few[:200]}... "
-        f"All participants aligned on upcoming sprint deliverables and next steps."
+        f"Meeting between {speaker_str}. "
+        f"Discussion covered: {preview}."
     )
 
+    # Extract action items from transcript content
     action_items = []
     for s in segments:
         text = s.get("text", "")
-        if any(w in text.lower() for w in ["will", "need to", "action", "task", "should", "by friday", "follow up"]):
+        if any(w in text.lower() for w in ["will", "need to", "action", "task", "should", "follow up"]):
             action_items.append(f"{s.get('speaker_name', 'Team')}: {text[:80]}")
         if len(action_items) >= 4:
             break
 
     if not action_items:
-        action_items = [
-            f"{speakers[0] if speakers else 'Team'}: Update task progress by Friday before next planning sync.",
-            "Team: Review sprint deliverables and document key decisions."
-        ]
+        action_items = ["Review transcript for detailed action items and next steps."]
+
+    # Extract topic labels from content
+    key_topics = []
+    topic_keywords = {
+        "design": "Design & UI", "api": "API Development", "deploy": "Deployment",
+        "test": "Testing", "bug": "Bug Fixes", "feature": "Feature Development",
+        "plan": "Planning", "review": "Review", "update": "Status Updates",
+        "hire": "Hiring", "sprint": "Sprint Planning", "release": "Release Planning"
+    }
+    for kw, label in topic_keywords.items():
+        if any(kw in s.get("text", "").lower() for s in segments):
+            key_topics.append(label)
+        if len(key_topics) >= 3:
+            break
+    if not key_topics:
+        key_topics = ["Team Discussion", "Status Updates"]
 
     return {
         "summary": summary_text,
-        "key_topics": ["Project Planning & Status", "Feature Alignment", "Action Items & Deliverables"],
+        "key_topics": key_topics,
         "action_items": action_items
     }
+
