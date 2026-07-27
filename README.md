@@ -1,19 +1,22 @@
 #  Fireflies.ai Clone — AI Meeting Assistant
 
-A full-stack, AI-powered meeting transcription and notebook platform inspired by Fireflies.ai. Built with Next.js 16, FastAPI, SQLite, and Google Gemini 3.5 Flash.
+A full-stack, AI-powered meeting transcription and notebook platform inspired by Fireflies.ai. Built with Next.js 16, FastAPI, SQLite, and Google Gemini API.
 
 ---
 
 ##  Features
 
 - **1. Interactive Media Player & Transcript Sync**: Play meeting recordings with automated active transcript segment highlighting and timestamp scrubbing (`?t=seconds`).
-- **2. LLM-Powered AskFred AI Chat**: Conversational AI assistant powered by `gemini-3.5-flash` to answer questions, extract action items, and summarize meeting insights.
+- **2. LLM-Powered AskFred AI Chat**: Conversational AI assistant powered by Gemini API (with smart fallback) to answer questions, extract action items, and summarize meeting insights — available on both individual meeting pages and the dashboard.
 - **3. Multi-Format Export**: Export executive summary reports to PDF (`window.print()`), Markdown (`.md`), Plain Text (`.txt`), and WebVTT Subtitles (`.vtt`).
 - **4. Line-Level Notes, Highlights & Soundbites**: Hover over any transcript line to highlight key moments, add sticky notes, or copy timestamped soundbite URLs to share.
 - **5. Category Tagging & Filtering**: Automatic topic inference and clickable category filter pills (`#Sales`, `#Engineering`, `#Product`, `#Marketing`, `#Design`, `#General`).
 - **6. Global Transcript Search**: Debounced instant search across all stored transcripts with `⌘K` keyboard shortcut.
 - **7. App-Wide Dark Theme**: Complete dark mode aesthetic with persistent theme storage in `localStorage`.
-- **8. Fully Responsive Design**: Seamless layout scaling from mobile viewports to ultra-wide desktop displays.
+- **8. Fully Responsive Design**: Seamless layout scaling from mobile viewports to ultra-wide desktop displays, including a mobile bottom navigation bar and mobile AskFred AI drawer.
+- **9. DB-Cached AI Summaries**: Meeting summaries are generated once and cached in the database — no repeated API calls. Includes a "Regenerate" button to refresh summaries on demand.
+- **10. Expandable Transcript View**: Toggle button to collapse the media player and expand the transcript to full height for focused reading.
+- **11. Smart AI Fallback**: When Gemini API rate limits are hit, the system automatically generates detailed multi-paragraph summaries and conversational AskFred responses from transcript data — ensuring the app never shows error messages.
 
 ---
 
@@ -27,11 +30,15 @@ A full-stack, AI-powered meeting transcription and notebook platform inspired by
 - **Utilities**: `date-fns`
 
 ### **Backend**
-- **Framework**: [FastAPI](https://fastapi.tiangolo.com/) (Python 3.12)
+- **Framework**: [FastAPI](https://fastapi.tiangolo.com/) (Python 3.11)
 - **Database**: SQLite with SQLAlchemy ORM
 - **Validation**: Pydantic v2
-- **AI Integration**: `google-genai` SDK (`gemini-3.5-flash`)
+- **AI Integration**: `google-genai` SDK (Gemini 1.5 Flash / 2.0 Flash with automatic model fallback)
 - **Server**: Uvicorn ASGI
+
+### **Deployment**
+- **Frontend**: [Vercel](https://vercel.com/)
+- **Backend**: [Render](https://render.com/)
 
 ---
 
@@ -41,19 +48,24 @@ A full-stack, AI-powered meeting transcription and notebook platform inspired by
 ┌─────────────────────────────────────────────────────────────┐
 │                    Next.js 16 Frontend                      │
 │   (Dashboard, Meeting Notepad 3-Pane View, Settings, Search) │
+│   Mobile: Bottom Nav Bar + AskFred AI Drawer                │
 └──────────────────────────────┬──────────────────────────────┘
                                │ REST API Calls (/api)
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                     FastAPI Backend                         │
-│  - Routers: /meetings, /meetings/{id}/chat, /action-items   │
+│  - Routers: /meetings, /meetings/{id}/chat,                 │
+│             /meetings/{id}/regenerate-summary, /action-items │
 │  - Services: transcript_parser, ai_summary, ask_fred        │
+│  - AI Fallback: Smart summary & chat when API rate-limited  │
 └──────────────┬──────────────────────────────┬───────────────┘
                │                              │
                ▼                              ▼
 ┌──────────────────────────────┐ ┌───────────────────────────┐
-│     SQLite Database          │ │  Google Gemini 3.5 Flash  │
-│  (meetings.db / SQLAlchemy)  │ │   (AI Summaries & Q&A)    │
+│     SQLite Database          │ │  Google Gemini API         │
+│  (meetings.db / SQLAlchemy)  │ │  (gemini-1.5-flash /      │
+│  - Cached AI Summaries       │ │   gemini-2.0-flash)       │
+│  - Transcript Segments       │ │  + Smart Fallback Engine  │
 └──────────────────────────────┘ └───────────────────────────┘
 ```
 
@@ -61,50 +73,58 @@ A full-stack, AI-powered meeting transcription and notebook platform inspired by
 
 ##  Database Schema
 
-The database uses SQLite managed via SQLAlchemy ORM models (`backend/models.py`):
+The database uses SQLite managed via SQLAlchemy ORM models (`backend/models/`):
 
 ### 1. `meetings`
 - `id` (INTEGER, Primary Key)
 - `title` (VARCHAR)
 - `date` (DATETIME)
 - `duration_seconds` (INTEGER)
-- `video_url` (VARCHAR, Nullable)
-- `audio_url` (VARCHAR, Nullable)
+- `media_url` (TEXT, Nullable)
 - `created_at` (DATETIME)
+- `updated_at` (DATETIME)
 
 ### 2. `participants`
 - `id` (INTEGER, Primary Key)
-- `meeting_id` (INTEGER, Foreign Key -> `meetings.id`)
 - `name` (VARCHAR)
-- `email` (VARCHAR)
+- `email` (VARCHAR, Unique)
 
-### 3. `transcript_segments`
+### 3. `meeting_participants` (Junction Table)
+- `meeting_id` (INTEGER, Foreign Key -> `meetings.id`)
+- `participant_id` (INTEGER, Foreign Key -> `participants.id`)
+
+### 4. `transcript_segments`
 - `id` (INTEGER, Primary Key)
 - `meeting_id` (INTEGER, Foreign Key -> `meetings.id`)
 - `speaker_name` (VARCHAR)
 - `text` (TEXT)
 - `start_time` (FLOAT)
 - `end_time` (FLOAT)
+- `order_index` (INTEGER)
 
-### 4. `summaries`
+### 5. `summaries` (Cached AI Summaries)
 - `id` (INTEGER, Primary Key)
-- `meeting_id` (INTEGER, Foreign Key -> `meetings.id`)
+- `meeting_id` (INTEGER, Foreign Key -> `meetings.id`, Unique)
 - `overview_text` (TEXT)
-- `created_at` (DATETIME)
+- `generated_at` (DATETIME)
 
-### 5. `key_topics`
+### 6. `key_topics`
 - `id` (INTEGER, Primary Key)
 - `meeting_id` (INTEGER, Foreign Key -> `meetings.id`)
 - `topic_text` (VARCHAR)
-- `start_time` (FLOAT, Nullable)
-- `end_time` (FLOAT, Nullable)
+- `order_index` (INTEGER)
 
-### 6. `action_items`
+### 7. `action_items`
 - `id` (INTEGER, Primary Key)
 - `meeting_id` (INTEGER, Foreign Key -> `meetings.id`)
-- `text` (VARCHAR)
+- `text` (TEXT)
 - `assignee` (VARCHAR, Nullable)
 - `is_completed` (BOOLEAN, Default: False)
+- `created_at` (DATETIME)
+
+### 8. `tags` & `meeting_tags`
+- Tags with `name` and `color` fields
+- Many-to-many junction table linking meetings to tags
 
 ---
 
@@ -129,6 +149,9 @@ pip install -r requirements.txt
 # Create .env file and add your Gemini API Key
 echo "GEMINI_API_KEY=your_actual_gemini_api_key" > .env
 
+# Seed the database with sample meetings
+python seed.py
+
 # Run FastAPI server on port 8000
 uvicorn main:app --reload --port 8000
 ```
@@ -142,10 +165,32 @@ cd frontend
 # Install dependencies
 npm install
 
+# Create .env.local with backend URL
+echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
+
 # Start Next.js development server
 npm run dev
 ```
 *Frontend application will be running at `http://localhost:3000`.*
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/meetings` | List all meetings (with search, date filter, sort) |
+| GET | `/meetings/{id}` | Get meeting detail with transcript, summary, topics |
+| POST | `/meetings` | Create a new meeting with transcript |
+| PATCH | `/meetings/{id}` | Update meeting title, date, participants |
+| DELETE | `/meetings/{id}` | Delete a meeting |
+| GET | `/meetings/search?q=` | Global transcript search |
+| GET | `/meetings/{id}/transcript/search?q=` | Search within a meeting transcript |
+| POST | `/meetings/{id}/chat` | AskFred AI — ask questions about a meeting |
+| POST | `/meetings/{id}/regenerate-summary` | Regenerate cached AI summary |
+| POST | `/action-items` | Create a new action item |
+| POST | `/action-items/{id}/toggle` | Toggle action item completion |
+| DELETE | `/action-items/{id}` | Delete an action item |
 
 ---
 
@@ -154,3 +199,5 @@ npm run dev
 1. **User Authentication**: The current version operates with a default logged-in profile ("Mannat") for local notebook management.
 2. **Audio/Video Playback**: Media player falls back to an interactive audio visualizer preview when sample video assets are not present locally.
 3. **Database Simplicity**: SQLite is used for lightweight local setup. For production scaling, SQLAlchemy models can be pointed to PostgreSQL with minimal configuration.
+4. **Gemini API Rate Limits**: Free-tier Gemini API has 15 RPM / 1,500 RPD limits. The app includes smart fallback generators that produce detailed summaries from transcript data when the API is rate-limited — no user-facing errors.
+5. **Summary Caching**: AI summaries are generated once at meeting creation and cached in the DB. Use the "Regenerate" button to refresh when API quota is available.
