@@ -93,8 +93,8 @@ Transcript:
 
 def _fallback_summary(segments: list[dict]) -> dict:
     """
-    Intelligent fallback summary generator when Gemini API is unavailable.
-    Extracts real content from transcript segments.
+    Detailed fallback summary generator when Gemini API is unavailable.
+    Produces comprehensive, multi-paragraph summaries from transcript segments.
     """
     if not segments:
         return {
@@ -104,44 +104,94 @@ def _fallback_summary(segments: list[dict]) -> dict:
         }
 
     speakers = list(dict.fromkeys(s.get("speaker_name", "Participant") for s in segments))
-    speaker_str = ", ".join(speakers[:4])
+    speaker_str = ", ".join(speakers[:6])
+    total_segments = len(segments)
 
-    # Extract meaningful text lines
-    sample_lines = [s.get("text", "") for s in segments if len(s.get("text", "")) > 10]
-    preview = " ".join(sample_lines[:3])[:250] if sample_lines else "various topics"
+    # Extract all meaningful text
+    all_text = [s.get("text", "") for s in segments if len(s.get("text", "")) > 10]
 
-    summary_text = (
-        f"Meeting between {speaker_str}. "
-        f"Discussion covered: {preview}."
+    # Build a detailed multi-paragraph summary
+    paragraphs = []
+
+    # Paragraph 1: Meeting overview
+    opening_lines = " ".join(all_text[:3])[:300] if all_text else ""
+    paragraphs.append(
+        f"This meeting included {len(speakers)} participant{'s' if len(speakers) > 1 else ''} "
+        f"({speaker_str}) and covered {total_segments} discussion points. "
+        f"The conversation opened with: {opening_lines}"
     )
+
+    # Paragraph 2: Middle discussion highlights
+    mid_start = len(all_text) // 3
+    mid_lines = all_text[mid_start:mid_start + 4] if len(all_text) > 4 else all_text[1:3]
+    if mid_lines:
+        mid_preview = " ".join(mid_lines)[:350]
+        paragraphs.append(
+            f"Key discussion points included: {mid_preview}"
+        )
+
+    # Paragraph 3: Closing / later discussion
+    if len(all_text) > 6:
+        closing_lines = " ".join(all_text[-3:])[:300]
+        paragraphs.append(
+            f"Toward the end of the meeting, the discussion focused on: {closing_lines}"
+        )
+
+    # Paragraph 4: Speaker contributions
+    speaker_counts = {}
+    for s in segments:
+        name = s.get("speaker_name", "Unknown")
+        speaker_counts[name] = speaker_counts.get(name, 0) + 1
+    
+    contributions = sorted(speaker_counts.items(), key=lambda x: x[1], reverse=True)
+    contrib_parts = [f"{name} ({count} contributions)" for name, count in contributions[:4]]
+    if contrib_parts:
+        paragraphs.append(
+            f"Speaker breakdown: {', '.join(contrib_parts)}."
+        )
+
+    summary_text = "\n\n".join(paragraphs)
 
     # Extract action items from transcript content
     action_items = []
+    action_keywords = ["will", "need to", "should", "must", "going to", "plan to", 
+                        "follow up", "action", "task", "deadline", "by friday", "next week",
+                        "responsible", "assigned", "deliver", "complete", "finish"]
     for s in segments:
         text = s.get("text", "")
-        if any(w in text.lower() for w in ["will", "need to", "action", "task", "should", "follow up"]):
-            action_items.append(f"{s.get('speaker_name', 'Team')}: {text[:80]}")
-        if len(action_items) >= 4:
+        if any(w in text.lower() for w in action_keywords):
+            item = f"{s.get('speaker_name', 'Team')}: {text[:120]}"
+            if item not in action_items:
+                action_items.append(item)
+        if len(action_items) >= 5:
             break
 
     if not action_items:
-        action_items = ["Review transcript for detailed action items and next steps."]
+        action_items = [
+            "Review meeting transcript for detailed action items.",
+            "Follow up on key discussion points with the team."
+        ]
 
     # Extract topic labels from content
     key_topics = []
     topic_keywords = {
         "design": "Design & UI", "api": "API Development", "deploy": "Deployment",
-        "test": "Testing", "bug": "Bug Fixes", "feature": "Feature Development",
-        "plan": "Planning", "review": "Review", "update": "Status Updates",
-        "hire": "Hiring", "sprint": "Sprint Planning", "release": "Release Planning"
+        "test": "Testing & QA", "bug": "Bug Fixes", "feature": "Feature Development",
+        "plan": "Planning & Strategy", "review": "Code Review", "update": "Status Updates",
+        "hire": "Hiring & Recruitment", "sprint": "Sprint Planning", "release": "Release Planning",
+        "mobile": "Mobile Development", "user": "User Experience", "data": "Data & Analytics",
+        "security": "Security", "performance": "Performance", "budget": "Budget & Resources",
+        "customer": "Customer Feedback", "product": "Product Roadmap", "marketing": "Marketing",
+        "onboard": "Onboarding", "meeting": "Meeting Coordination", "timeline": "Timeline & Milestones"
     }
+    all_lower = " ".join(s.get("text", "").lower() for s in segments)
     for kw, label in topic_keywords.items():
-        if any(kw in s.get("text", "").lower() for s in segments):
+        if kw in all_lower:
             key_topics.append(label)
-        if len(key_topics) >= 3:
+        if len(key_topics) >= 5:
             break
     if not key_topics:
-        key_topics = ["Team Discussion", "Status Updates"]
+        key_topics = ["Team Discussion", "Project Updates", "Action Items"]
 
     return {
         "summary": summary_text,
